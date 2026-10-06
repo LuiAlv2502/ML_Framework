@@ -8,3 +8,4 @@ scipy>=1.10
 umap-learn>=0.5
 ipykernel>=6.0
 streamlit
+plotly>=5.18

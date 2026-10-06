@@ -33,6 +33,11 @@ class DataModel:
         )
         return self.__dataframe
 
+    def cargar_dataframe(self, df):
+        self.__datos_originales = df.copy()
+        self.__dataframe = _ModelAnalysis(self.__datos_originales.copy())
+        return self.__dataframe
+
     def restaurar(self):
         self.__dataframe = _ModelAnalysis(
             self.__datos_originales.copy()
