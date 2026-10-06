@@ -1,17 +1,69 @@
 # Laboratorio de análisis de datos
 
-Paquete en Python para cargar y explorar datos, realizar preprocesamiento y ejecutar análisis de aprendizaje no supervisado y clasificación supervisada. La interfaz MVC de Jupyter disponible actualmente está enfocada en los procedimientos no supervisados.
+Aplicación de análisis de datos desarrollada en Python. La interfaz principal utiliza **Streamlit** y permite cargar archivos CSV, explorar los datos, ejecutar análisis no supervisados y entrenar modelos de clasificación. La lógica de análisis se organiza en módulos reutilizables; los notebooks que quedan en el repositorio son material complementario y no son necesarios para ejecutar la aplicación.
 
-## Uso rápido
+## Requisitos
 
-1. Abra [notebooks/Version3_MVC.ipynb](notebooks/Version3_MVC.ipynb).
-2. Ejecute las primeras cuatro celdas en orden.
-3. Escriba la ruta de un archivo CSV en el campo **Archivo** y presione **Cargar archivo**.
-4. Seleccione un método. La interfaz mostrará únicamente los parámetros necesarios para esa operación.
+- Python instalado.
+- Las dependencias indicadas en `requirements.txt`.
 
-El archivo `data/drug200.csv` se incluye como ejemplo, pero la aplicación no depende de él.
+## Instalación y ejecución
 
-## Procedimientos disponibles
+Desde la carpeta raíz del proyecto, cree y active un entorno virtual e instale las dependencias:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Inicie la aplicación con:
+
+```powershell
+python -m streamlit run app.py
+```
+
+Streamlit abrirá la aplicación en el navegador. Para detenerla, presione `Ctrl+C` en la terminal.
+
+## Uso de la aplicación
+
+1. Ejecute `streamlit run app.py` desde la raíz del proyecto.
+2. En la barra lateral, cargue un archivo CSV. El mismo conjunto de datos queda disponible en las páginas de la aplicación durante la sesión.
+3. Seleccione una página desde la navegación:
+   - **No supervisado**: vista previa, estadísticas descriptivas, conteo de nulos, correlación e histogramas de columnas numéricas; reducción dimensional con PCA, t-SNE o UMAP; agrupamiento con K-Means o HAC y método del codo.
+   - **Supervisado - Clasificación**: seleccione la variable objetivo, la proporción de prueba y el algoritmo; entrene y consulte métricas, matriz de confusión e informe por clase.
+   - **Supervisado - Predicción**: página reservada para regresión; el módulo todavía no está implementado.
+4. La aplicación muestra los controles pertinentes para los parámetros del método elegido.
+
+El archivo `data/drug200.csv` se incluye como conjunto de ejemplo. También puede cargar otro CSV desde la interfaz.
+
+### Funciones disponibles en la interfaz Streamlit
+
+En la página **No supervisado** se ofrecen:
+
+- Exploración de las primeras filas y estadísticas descriptivas.
+- Conteo de valores nulos y análisis visual de correlación y distribución para variables numéricas.
+- PCA en dos o tres dimensiones, con varianza explicada y visualizaciones.
+- t-SNE y UMAP en dos o tres dimensiones, con parámetros configurables.
+- K-Means y HAC, selección del número de clústeres, método del codo y visualización de los grupos proyectados mediante PCA.
+
+En **Supervisado - Clasificación** se ofrecen KNN, árbol de decisión, Random Forest, Gradient Boosting, AdaBoost y XGBoost. Se presentan *accuracy*, precisión macro, *recall* macro, F1 macro, matriz de confusión e informe por clase.
+
+> La interfaz Streamlit no expone todos los métodos de manipulación y análisis del modelo MVC descritos más abajo. Esas operaciones siguen disponibles a través de la API Python de `DataModel`; las páginas de la aplicación muestran el subconjunto implementado en cada flujo.
+
+### Pruebas
+
+Desde la raíz del proyecto, ejecute:
+
+```powershell
+python -m pytest
+```
+
+Los notebooks de `notebooks/` son experimentos y material heredado de desarrollo; no son el punto de entrada de la aplicación Streamlit.
+
+## Operaciones disponibles en el modelo MVC
+
+Las siguientes tablas describen operaciones expuestas por el modelo/API. No todas tienen un control equivalente en la interfaz Streamlit actual.
 
 ### Consulta y estructura
 
@@ -80,7 +132,7 @@ Antes de estos métodos, la aplicación codifica variables categóricas mediante
 
 | Procedimiento | Significado |
 | --- | --- |
-| PCA | Análisis de Componentes Principales (ACP): crea componentes ortogonales que resumen la mayor cantidad posible de variabilidad. Se visualizan las dos primeras componentes. |
+| PCA | Análisis de Componentes Principales (ACP): crea componentes ortogonales que resumen la mayor cantidad posible de variabilidad. La API permite elegir el número de componentes. |
 | PCA (variación) | Ejecuta PCA con `whiten=True` y el solucionador aleatorizado; sirve para comparar configuraciones. |
 | HAC | Agrupamiento Jerárquico Aglomerativo: inicia con un grupo por observación y une los más similares hasta obtener el número de clústeres elegido. El enlace puede ser `ward`, `average`, `complete` o `single`. |
 | HAC Dendrograma | Árbol que muestra el orden y la distancia a la que se fusionan grupos en HAC. |
@@ -89,7 +141,7 @@ Antes de estos métodos, la aplicación codifica variables categóricas mediante
 | t-SNE | Proyección no lineal que prioriza conservar vecindades locales; se utiliza principalmente para visualizar datos de muchas dimensiones. Su parámetro clave es la *perplexity*. |
 | UMAP | Proyección no lineal que preserva estructura local y parte de la global. `n_neighbors` controla el tamaño del vecindario y `min_dist` la separación mínima en la proyección. |
 
-Para HAC y K-Means se reporta el **silhouette score**, donde valores cercanos a $1$ sugieren grupos más separados. K-Means además reporta la **inercia**, suma de distancias cuadradas de cada observación a su centroide.
+Para HAC y K-Means se reporta el **silhouette score**, donde valores cercanos a $1$ sugieren grupos más separados. K-Means además reporta la **inercia**, suma de distancias cuadradas de cada observación a su centroide. En la interfaz Streamlit, la opción de método del codo está disponible en la página **No supervisado**.
 
 ## Aprendizaje supervisado: clasificación
 
@@ -111,11 +163,11 @@ Para estimar la capacidad de generalización, los datos se dividen en entrenamie
 
 ### Flujo de clasificación implementado
 
-La clase `ClasificacionModelos` hereda de `SupervisadoBase`. Se construye con un DataFrame y el nombre de la columna objetivo. El parámetro `test_size` controla la proporción reservada para prueba; por defecto es $0.25$, y la división es reproducible mediante `random_state`.
+La clase `ClasificacionModelos` hereda de `SupervisadoBase`. Se construye con un DataFrame y el nombre de la columna objetivo. El parámetro `test_size` controla la proporción reservada para prueba; por defecto es $0.25$, y la división es reproducible mediante `random_state`. La interfaz Streamlit permite configurar `test_size` y seleccionar la variable objetivo.
 
 La preparación de predictores forma parte de un `Pipeline` para aprender las transformaciones únicamente con los datos de entrenamiento. Las columnas numéricas reciben imputación por mediana y, si se solicita, estandarización. Las categóricas reciben imputación por moda y codificación *one-hot*. Las columnas predictoras pueden limitarse con `feature_columns`; los registros sin respuesta objetivo se rechazan.
 
-Los métodos disponibles son `knn`, `decision_tree`, `random_forest`, `adaboost` y `xgboost`. `gradient_boosting` es una alternativa adicional. Cada método permite configurar algunos hiperparámetros y devuelve el pipeline entrenado junto con sus métricas. XGBoost codifica internamente las etiquetas de texto y las devuelve en su forma original al predecir.
+Los métodos disponibles son `knn`, `decision_tree`, `random_forest`, `gradient_boosting`, `adaboost` y `xgboost`. Cada método permite configurar algunos hiperparámetros y devuelve el pipeline entrenado junto con sus métricas. XGBoost codifica internamente las etiquetas de texto y las devuelve en su forma original al predecir.
 
 Las métricas de clasificación incluyen *accuracy*, precisión, *recall* y F1 macro, matriz de confusión y reporte por clase. El promedio macro otorga el mismo peso a cada clase, lo que resulta útil cuando las clases tienen tamaños distintos.
 
@@ -140,11 +192,11 @@ resultado = clasificador.knn(n_neighbors=5)
 print(resultado["metricas"])
 ```
 
-La carpeta de regresión está reservada para desarrollos posteriores; por ahora no contiene algoritmos implementados.
+La página de predicción está reservada para desarrollar regresión más adelante; actualmente no hay algoritmos de regresión implementados.
 
 ### Métricas de los métodos no supervisados
 
-Los métodos no supervisados reportan métricas para ayudar a interpretar sus resultados.
+Los métodos no supervisados devuelven métricas para ayudar a interpretar sus resultados.
 
 | Técnica | Mensaje en consola | Interpretación simple |
 | --- | --- | --- |
@@ -156,30 +208,35 @@ Los métodos no supervisados reportan métricas para ayudar a interpretar sus re
 
 Las funciones también devuelven el modelo o resultado. En PCA y clustering se retorna un diccionario con el modelo y la métrica; en t-SNE y UMAP, el `DataFrame` del embedding conserva el modelo y `trustworthiness` en `resultado.attrs`.
 
-## Estructura
+## Estructura del proyecto
 
 ```text
+app.py
+pages/
+	_shared.py
+	unsupervised.py
+	classification.py
+	prediction.py
 data/
 	Archivos CSV de entrada
 notebooks/
 	Experimentacion_No_Supervisada.ipynb
 	Pruebas_MVC.ipynb
 	Version3_MVC.ipynb
-src/
-	controller.py
-	dataframe_desarrollado.py
-	model.py
-	view.py
-	supervised/
-		__init__.py
-		_base.py
-		Classification/
+	src/
+		controller.py
+		dataframe_desarrollado.py
+		model.py
+		view.py
+		supervised/
 			__init__.py
-			Clasificacion.py
-		Regression/             Reservada para desarrollo futuro
-	unsupervised/
-		__init__.py
-		_base.py
+			_base.py
+			Classification/
+				__init__.py
+				Clasificacion.py
+		unsupervised/
+			__init__.py
+			_base.py
 		clustering.py
 		pca.py
 tests/
