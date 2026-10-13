@@ -117,6 +117,30 @@ def test_clasificacion_knn_preprocesa_categorias_y_evalua_multiclase(model):
     assert resultado["model"].predict(split.X_test).shape == split.y_test.shape
 
 
+def test_matriz_confusion_expone_etiquetas_en_el_mismo_orden():
+    datos = pd.DataFrame(
+        {
+            "predictor": range(6),
+            "objetivo": ["a", "b", "c", "a", "b", "c"],
+        }
+    )
+    clasificador = ClasificacionModelos(datos, target="objetivo")
+
+    metricas = clasificador.evaluar_clasificacion(
+        ["a", "b", "a"],
+        ["a", "b", "b"],
+    )
+
+    assert metricas["confusion_matrix_labels"] == ["a", "b"]
+    assert len(metricas["confusion_matrix"]) == len(
+        metricas["confusion_matrix_labels"]
+    )
+    assert all(
+        len(fila) == len(metricas["confusion_matrix_labels"])
+        for fila in metricas["confusion_matrix"]
+    )
+
+
 def test_clasificacion_xgboost_admite_etiquetas_categoricas(model):
     clasificador = ClasificacionModelos(model.mostrar(), target="Drug")
 

@@ -21,6 +21,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils.multiclass import unique_labels
 
 from .._base import SupervisadoBase
 
@@ -47,6 +48,7 @@ class _EncodedTargetClassifier(ClassifierMixin, BaseEstimator):
 
 class ClasificacionModelos(SupervisadoBase):
 	def evaluar_clasificacion(self, y_true, y_pred) -> dict[str, Any]:
+		labels = unique_labels(y_true, y_pred)
 		return {
 			"accuracy": float(accuracy_score(y_true, y_pred)),
 			"precision_macro": float(
@@ -58,7 +60,12 @@ class ClasificacionModelos(SupervisadoBase):
 			"f1_macro": float(
 				f1_score(y_true, y_pred, average="macro", zero_division=0)
 			),
-			"confusion_matrix": confusion_matrix(y_true, y_pred).tolist(),
+			"confusion_matrix": confusion_matrix(
+				y_true,
+				y_pred,
+				labels=labels,
+			).tolist(),
+			"confusion_matrix_labels": [str(label) for label in labels],
 			"classification_report": classification_report(
 				y_true, y_pred, output_dict=True, zero_division=0
 			),
