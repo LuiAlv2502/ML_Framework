@@ -96,7 +96,7 @@ def test_embeddings_tienen_dos_dimensiones(model, metodo, parametros):
 
 
 def test_pca_rechaza_dataframe_vacio():
-    datos = DataFrame(pd.DataFrame())
+    datos = PCAAnalysis(pd.DataFrame())
 
     with pytest.raises(ValueError, match="No hay datos"):
         datos.pca()

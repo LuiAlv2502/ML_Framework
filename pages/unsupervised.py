@@ -18,15 +18,15 @@ tab_eda, tab_reduccion, tab_cluster = st.tabs(
 
 with tab_eda:
     st.subheader("Vista previa")
-    st.dataframe(model.primeras_filas(10), use_container_width=True)
+    st.dataframe(model.primeras_filas(10), width="stretch")
 
     col1, col2 = st.columns(2)
     with col1:
         if st.checkbox("Estadísticas descriptivas"):
-            st.dataframe(model.estadisticas(), use_container_width=True)
+            st.dataframe(model.estadisticas(), width="stretch")
     with col2:
         if st.checkbox("Nulos por columna"):
-            st.dataframe(model.contar_nulos(), use_container_width=True)
+            st.dataframe(model.contar_nulos(), width="stretch")
 
 
 
@@ -43,12 +43,12 @@ with tab_eda:
             aspect="auto",
         )
         fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         st.subheader("Distribución por variable")
         columna = st.selectbox("Variable", df_num.columns.tolist())
         fig_hist = px.histogram(df_num, x=columna, nbins=30, marginal="box")
-        st.plotly_chart(fig_hist, use_container_width=True)
+        st.plotly_chart(fig_hist, width="stretch")
 
 with tab_reduccion:
     metodo = st.selectbox("Método", ["PCA", "t-SNE", "UMAP"])
@@ -94,7 +94,7 @@ with tab_reduccion:
                         )
                     fig.update_traces(marker=dict(size=6, opacity=0.75))
                     fig.update_layout(height=600)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
                     st.subheader("Varianza explicada")
                     fig_var = px.bar(
@@ -102,7 +102,7 @@ with tab_reduccion:
                         y=var_exp,
                         labels={"x": "Componente", "y": "Varianza"},
                     )
-                    st.plotly_chart(fig_var, use_container_width=True)
+                    st.plotly_chart(fig_var, width="stretch")
 
                     st.subheader("Círculo de correlaciones")
                     cargas = resultado["cargas"]
@@ -148,7 +148,7 @@ with tab_reduccion:
                         ),
                         height=600,
                     )
-                    st.plotly_chart(fig_circ, use_container_width=True)
+                    st.plotly_chart(fig_circ, width="stretch")
                 else:
                     if metodo == "t-SNE":
                         emb = model.tsne(n_components=n, perplexity=perplexity)
@@ -170,7 +170,7 @@ with tab_reduccion:
                         fig = px.scatter(emb, x="Dim1", y="Dim2", title=metodo)
                     fig.update_traces(marker=dict(size=6, opacity=0.75))
                     fig.update_layout(height=600)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
             except Exception as error:
                 st.error(f"Error: {error}")
 
@@ -203,7 +203,7 @@ with tab_cluster:
                     labels={"x": "k", "y": "Inercia"},
                     title="Método del codo",
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             except Exception as error:
                 st.error(f"Error: {error}")
 
@@ -217,7 +217,7 @@ with tab_cluster:
 
                 st.success(f"Silhouette: {resultado['silhouette']:.4f}")
                 df_resultado = resultado["resultado"]
-                st.dataframe(df_resultado.head(), use_container_width=True)
+                st.dataframe(df_resultado.head(), width="stretch")
 
                 from sklearn.decomposition import PCA
 
@@ -237,6 +237,6 @@ with tab_cluster:
                 fig.update_traces(
                     marker=dict(size=8, line=dict(width=0.5, color="white"))
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             except Exception as error:
                 st.error(f"Error: {error}")

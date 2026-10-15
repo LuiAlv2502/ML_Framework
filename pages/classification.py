@@ -312,7 +312,7 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
         )
         figura.update_xaxes(range=[0, 100], title="%")
         figura.update_layout(barmode="stack", height=max(300, 80 * len(categorias)), legend_title_text="")
-        st.plotly_chart(figura, use_container_width=True, key=f"barras_{label}_{exp_idx}")
+        st.plotly_chart(figura, width="stretch", key=f"barras_{label}_{exp_idx}")
 
     # --- Tabla de datos reales vs. predicción ---
     with col_tabla:
@@ -346,7 +346,7 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
 
         st.dataframe(
             tabla.style.apply(_estilos_filas, axis=None),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=380,
         )
@@ -419,7 +419,7 @@ with st.container(border=True):
             tabla_nombres,
             key=f"nombres_clases_{objetivo}",
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
             disabled=["Código original"],
             column_config={
                 "Código original": st.column_config.TextColumn(),
@@ -597,7 +597,7 @@ tabla_datos = df.copy()
 tabla_datos.insert(0, "Partición", exp["particion"])
 st.dataframe(
     tabla_datos.style.map(_colorear_particion, subset=["Partición"]),
-    use_container_width=True,
+    width="stretch",
     height=320,
 )
 st.download_button(
@@ -758,7 +758,7 @@ with tab_var:
         )
         figura.update_xaxes(dtick=1)
         figura.update_yaxes(title=f"{indice} {categoria} (%)", range=[0, 100])
-        st.plotly_chart(figura, use_container_width=True, key="grafico_variacion")
+        st.plotly_chart(figura, width="stretch", key="grafico_variacion")
 
 # ----- Comparación de modelos -----
 with tab_comp:
@@ -801,7 +801,7 @@ with tab_comp:
             with tab_tabla:
                 st.dataframe(
                     comparacion.style.format({c: "{:.2f}" for c in columnas_num}, na_rep="-"),
-                    use_container_width=True,
+                    width="stretch",
                     hide_index=True,
                 )
             with tab_grafico:
@@ -821,7 +821,7 @@ with tab_comp:
                 figura.for_each_trace(
                     lambda t: t.update(visible="legendonly") if t.name != "Global" else None
                 )
-                st.plotly_chart(figura, use_container_width=True, key="grafico_comparativo")
+                st.plotly_chart(figura, width="stretch", key="grafico_comparativo")
 
         if st.button("Quitar todos los modelos ejecutados", key="btn_limpiar_modelos"):
             cache.clear()
