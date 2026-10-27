@@ -1,3 +1,3 @@
-from .Clasificacion import ClasificacionModelos
+from .Classification import ClasificacionModelos
 
 __all__ = ["ClasificacionModelos"]

@@ -1,3 +1,3 @@
-from .Regresion import RegresionModelos
+from .Regression import RegresionModelos
 
 __all__ = ["RegresionModelos"]

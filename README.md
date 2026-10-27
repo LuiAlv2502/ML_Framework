@@ -212,6 +212,9 @@ Las funciones también devuelven el modelo o resultado. En PCA y clustering se r
 
 ```text
 app.py
+Lab1_Documentation.pdf
+Lab_2_Classification.pdf
+TEAM_MEMBERS.txt
 pages/
 	_shared.py
 	unsupervised.py
@@ -220,20 +223,25 @@ pages/
 data/
 	Archivos CSV de entrada
 notebooks/
-	Experimentacion_No_Supervisada.ipynb
-	Pruebas_MVC.ipynb
-	Version3_MVC.ipynb
+		Classification_Experiments.ipynb
+		Classification_Experiments.ipynb
+		Unsupervised_Experiments.ipynb
+		MVC_Tests.ipynb
+		Version3_MVC.ipynb
 	src/
-		controller.py
-		dataframe_desarrollado.py
-		model.py
-		view.py
-		supervised/
+			controller.py
+			dataframe.py
+			model.py
+			view.py
+			supervised/
 			__init__.py
 			_base.py
 			Classification/
 				__init__.py
-				Clasificacion.py
+				Classification.py
+			Regression/
+				__init__.py
+				Regression.py
 		unsupervised/
 			__init__.py
 			_base.py
