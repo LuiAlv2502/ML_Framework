@@ -4,7 +4,7 @@ import pandas as pd
 from IPython.display import display
 from sklearn.decomposition import PCA
 
-from ._base import UnsupervisedBase
+from .unsupervised_base import UnsupervisedBase
 
 
 class PCAAnalysis(UnsupervisedBase):

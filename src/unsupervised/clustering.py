@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE, trustworthiness
 from sklearn.metrics import silhouette_score
 
-from ._base import UnsupervisedBase
+from .unsupervised_base import UnsupervisedBase
 
 try:
     import umap

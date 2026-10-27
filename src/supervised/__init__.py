@@ -1,6 +1,6 @@
 """Algoritmos de aprendizaje supervisado."""
 
-from ._base import SplitData, SupervisadoBase
+from .supervised_base import SplitData, SupervisadoBase
 from .Classification import ClasificacionModelos
 from .Regression import RegresionModelos
 

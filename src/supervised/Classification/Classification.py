@@ -23,7 +23,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import unique_labels
 
-from .._base import SupervisadoBase
+from ..supervised_base import SupervisadoBase
 
 
 class _EncodedTargetClassifier(ClassifierMixin, BaseEstimator):

@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from EDA.dataframe import DataFrame
 from model import DataModel
 from supervised import ClasificacionModelos
-from unsupervised._base import UnsupervisedBase
+from unsupervised.unsupervised_base import UnsupervisedBase
 from unsupervised.clustering import ClusteringAnalysis
 from unsupervised.pca import PCAAnalysis
 

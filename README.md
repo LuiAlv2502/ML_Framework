@@ -236,7 +236,7 @@ notebooks/
 			dataframe.py
 		supervised/
 			__init__.py
-			_base.py
+			supervised_base.py
 			Classification/
 				__init__.py
 				Classification.py
@@ -245,7 +245,7 @@ notebooks/
 				Regression.py
 		unsupervised/
 			__init__.py
-			_base.py
+			unsupervised_base.py
 			clustering.py
 			pca.py
 tests/
