@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from dataframe import DataFrame
+from EDA.dataframe import DataFrame
 
 
 class UnsupervisedBase(DataFrame):

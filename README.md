@@ -224,16 +224,17 @@ data/
 	Archivos CSV de entrada
 notebooks/
 		Classification_Experiments.ipynb
-		Classification_Experiments.ipynb
 		Unsupervised_Experiments.ipynb
 		MVC_Tests.ipynb
 		Version3_MVC.ipynb
 	src/
-			controller.py
+		controller.py
+		model.py
+		view.py
+		EDA/
+			__init__.py
 			dataframe.py
-			model.py
-			view.py
-			supervised/
+		supervised/
 			__init__.py
 			_base.py
 			Classification/
@@ -245,8 +246,8 @@ notebooks/
 		unsupervised/
 			__init__.py
 			_base.py
-		clustering.py
-		pca.py
+			clustering.py
+			pca.py
 tests/
 	test_mvc.py
 requirements.txt
