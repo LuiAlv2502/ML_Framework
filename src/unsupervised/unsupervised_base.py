@@ -1,8 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from Eda.dataframe import DataFrame
-
+from EDA.dataframe import DataFrame
 
 class UnsupervisedBase(DataFrame):
     def preparar_datos_numericos(self, columnas=None):
