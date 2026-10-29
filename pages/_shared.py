@@ -6,6 +6,23 @@ import streamlit as st
 
 from model import DataModel
 
+CLAVES_RESULTADOS = (
+    "clf_particiones",
+    "clf_resultados",
+    "clf_comparacion",
+    "exp_seleccionado",
+    "reg_particiones",
+    "reg_resultados",
+    "reg_benchmark",
+    "reg_exp_seleccionado",
+)
+
+
+def limpiar_resultados():
+    """Descarta particiones y modelos entrenados cuando cambian los datos."""
+    for clave in CLAVES_RESULTADOS:
+        st.session_state.pop(clave, None)
+
 
 def obtener_modelo():
     if "model" not in st.session_state:
@@ -34,14 +51,7 @@ def obtener_modelo():
         st.session_state.archivo_nombre = archivo.name
         st.session_state.archivo_hash = archivo_hash
         archivo_actualizado = True
-
-        for clave in (
-            "clf_particiones",
-            "clf_resultados",
-            "clf_comparacion",
-            "exp_seleccionado",
-        ):
-            st.session_state.pop(clave, None)
+        limpiar_resultados()
 
     model = st.session_state.model
     filas, columnas = model.dimensiones()

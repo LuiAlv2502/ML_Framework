@@ -5,18 +5,26 @@ import streamlit as st
 
 sys.path.append(str(Path(__file__).parent / "src"))
 
+from pages._theme import aplicar_estilo  # noqa: E402
+
 st.set_page_config(
     page_title="Laboratorio IA",
     layout="wide",
 )
+aplicar_estilo()
 
 pg = st.navigation(
     [
         st.Page(
+            "pages/eda.py",
+            title="Exploración (EDA)",
+            icon=":material/query_stats:",
+            default=True,
+        ),
+        st.Page(
             "pages/unsupervised.py",
             title="No supervisado",
             icon=":material/scatter_plot:",
-            default=True,
         ),
         st.Page(
             "pages/classification.py",
@@ -33,6 +41,6 @@ pg = st.navigation(
 
 with st.sidebar:
     st.markdown("### Laboratorio IA")
-    st.caption("Análisis de datos con MVC + Streamlit")
+    st.caption("Análisis de datos con MVC + Streamlit · Night City edition")
 
 pg.run()

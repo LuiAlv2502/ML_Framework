@@ -4,6 +4,7 @@ import plotly.express as px
 import streamlit as st
 
 from pages._shared import obtener_modelo
+from pages._theme import AMARILLO, CIAN, MAGENTA, ROJO as ROJO_NEON, VERDE as VERDE_NEON, brillo, grafico
 from supervised import ClasificacionModelos
 
 
@@ -29,10 +30,12 @@ ABREVIATURAS = {
 }
 
 MAX_CLASES = 30
-COLOR_APRENDIZAJE = "#f8766d"
-COLOR_PRUEBA = "#00bfc4"
-VERDE = "#8fdc57"
-ROJO = "#dc5f55"
+COLOR_APRENDIZAJE = "rgba(0, 240, 255, 0.25)"
+COLOR_PRUEBA = "rgba(255, 42, 109, 0.30)"
+VERDE = VERDE_NEON
+ROJO = ROJO_NEON
+FONDO_ACIERTO = "rgba(0, 255, 159, 0.22)"
+FONDO_ERROR = "rgba(255, 0, 60, 0.22)"
 
 
 # ---------------------------------------------------------------------------
@@ -65,9 +68,9 @@ def _tabla_predicciones(split, modelo):
 
 def _colorear_particion(valor):
     if valor == "Aprendizaje":
-        return f"background-color: {COLOR_APRENDIZAJE}; color: black"
+        return f"background-color: {COLOR_APRENDIZAJE}; color: {CIAN}"
     if valor == "Prueba":
-        return f"background-color: {COLOR_PRUEBA}; color: black"
+        return f"background-color: {COLOR_PRUEBA}; color: {MAGENTA}"
     return ""
 
 
@@ -278,8 +281,8 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
     def _estilos(_):
         arreglo = np.where(
             diagonal,
-            f"background-color: {VERDE}; color: black; text-align: center",
-            f"background-color: {ROJO}; color: black; text-align: center",
+            f"background-color: {FONDO_ACIERTO}; color: {VERDE}; font-weight: 700; text-align: center",
+            f"background-color: {FONDO_ERROR}; color: #FF6B8B; text-align: center",
         )
         return pd.DataFrame(arreglo, index=matriz.index, columns=matriz.columns)
 
@@ -310,9 +313,10 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
             color_discrete_map={"Precisión": VERDE, "Error": ROJO},
             category_orders={"Categoría": categorias[::-1]},
         )
+        figura.update_traces(textfont=dict(color="#000"), selector=dict(name="Precisión"))
         figura.update_xaxes(range=[0, 100], title="%")
-        figura.update_layout(barmode="stack", height=max(300, 80 * len(categorias)), legend_title_text="")
-        st.plotly_chart(figura, width="stretch", key=f"barras_{label}_{exp_idx}")
+        figura.update_layout(barmode="stack", legend_title_text="")
+        grafico(figura, key=f"barras_{label}_{exp_idx}", height=max(300, 80 * len(categorias)))
 
     # --- Tabla de datos reales vs. predicción ---
     with col_tabla:
@@ -338,8 +342,8 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
         def _estilos_filas(_):
             arreglo = np.where(
                 correcto[:, None],
-                "background-color: #d4edbc; color: black",
-                "background-color: #f5c6c2; color: black",
+                f"background-color: {FONDO_ACIERTO}; color: {VERDE}",
+                f"background-color: {FONDO_ERROR}; color: #FF6B8B",
             )
             arreglo = np.tile(arreglo[:, :1], (1, tabla.shape[1]))
             return pd.DataFrame(arreglo, index=tabla.index, columns=tabla.columns)
@@ -756,9 +760,10 @@ with tab_var:
             color="Modelo",
             markers=True,
         )
+        figura.update_traces(line=dict(width=3), marker=dict(size=10, symbol="diamond"))
         figura.update_xaxes(dtick=1)
         figura.update_yaxes(title=f"{indice} {categoria} (%)", range=[0, 100])
-        st.plotly_chart(figura, width="stretch", key="grafico_variacion")
+        grafico(brillo(figura), key="grafico_variacion", height=450)
 
 # ----- Comparación de modelos -----
 with tab_comp:
@@ -815,13 +820,15 @@ with tab_comp:
                     y="Precisión",
                     color="Serie",
                     barmode="group",
+                    text=largo["Precisión"].map(lambda v: f"{v:.1f}%"),
+                    color_discrete_map={"Global": AMARILLO},
                 )
                 figura.update_yaxes(range=[0, 100], title="Precisión (%)")
                 # Como en discoveR: solo "Global" visible; las clases se activan en la leyenda
                 figura.for_each_trace(
                     lambda t: t.update(visible="legendonly") if t.name != "Global" else None
                 )
-                st.plotly_chart(figura, width="stretch", key="grafico_comparativo")
+                grafico(figura, key="grafico_comparativo", height=450)
 
         if st.button("Quitar todos los modelos ejecutados", key="btn_limpiar_modelos"):
             cache.clear()

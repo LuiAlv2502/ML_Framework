@@ -10,10 +10,6 @@ from sklearn.metrics import silhouette_score
 
 from .unsupervised_base import UnsupervisedBase
 
-try:
-    import umap
-except ImportError:
-    umap = None
 
 
 class ClusteringAnalysis(UnsupervisedBase):
@@ -142,8 +138,11 @@ class ClusteringAnalysis(UnsupervisedBase):
         return resultado
 
     def umap_embedding(self, n_components=2, n_neighbors=15, min_dist=0.1, columnas=None):
-        if umap is None:
-            raise ImportError("Instale umap-learn con: pip install umap-learn")
+        # Importación diferida: umap carga numba y tarda varios segundos
+        try:
+            import umap
+        except ImportError as error:
+            raise ImportError("Instale umap-learn con: pip install umap-learn") from error
 
         matriz, _ = self.preparar_datos_numericos(columnas)
         modelo = umap.UMAP(
