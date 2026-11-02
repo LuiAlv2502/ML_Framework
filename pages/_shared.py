@@ -24,7 +24,13 @@ def limpiar_resultados():
         st.session_state.pop(clave, None)
 
 
-def obtener_modelo():
+def limpiar_estado_eda():
+    """Descarta el resultado del EDA y el conjunto derivado del archivo anterior."""
+    for clave in ("agente_eda", "agente_eda_html", "eda_archivo_hash", "eda_objetivo", "modelo_eda"):
+        st.session_state.pop(clave, None)
+
+
+def obtener_modelo(requiere_eda=True, requiere_objetivo=False):
     if "model" not in st.session_state:
         st.session_state.model = DataModel()
         st.session_state.archivo_nombre = None
@@ -52,6 +58,7 @@ def obtener_modelo():
         st.session_state.archivo_hash = archivo_hash
         archivo_actualizado = True
         limpiar_resultados()
+        limpiar_estado_eda()
 
     model = st.session_state.model
     filas, columnas = model.dimensiones()
@@ -69,4 +76,27 @@ def obtener_modelo():
         else:
             st.info("Sube un CSV para comenzar.")
 
-    return model if filas > 0 else None
+    if filas == 0:
+        return None
+
+    if not requiere_eda:
+        return model
+
+    modelo_eda = st.session_state.get("modelo_eda")
+    eda_vigente = (
+        modelo_eda is not None
+        and st.session_state.get("eda_archivo_hash") == st.session_state.get("archivo_hash")
+    )
+    if not eda_vigente:
+        st.warning("Antes de continuar, ejecuta el EDA para preparar este archivo.")
+        st.page_link("pages/agent_eda.py", label="Ir al agente EDA", icon=":material/smart_toy:")
+        return None
+
+    if requiere_objetivo and not st.session_state.get("eda_objetivo"):
+        st.warning(
+            "Para usar clasificación o regresión, vuelve al EDA y selecciona la variable objetivo."
+        )
+        st.page_link("pages/agent_eda.py", label="Ir al agente EDA", icon=":material/smart_toy:")
+        return None
+
+    return modelo_eda

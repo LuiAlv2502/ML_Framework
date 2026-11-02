@@ -1,15 +1,18 @@
 import streamlit as st
 
 from agents import AgenteEDA
-from pages._shared import obtener_modelo
+from model import DataModel
+from pages._shared import limpiar_resultados, obtener_modelo
 
 st.title("Agente inteligente de EDA")
 st.caption(
-    "El agente observa los datos, decide qué pasos del EDA son necesarios, los ejecuta, "
-    "interpreta cada resultado y gráfico, y da recomendaciones. No modifica los datos cargados."
+    "Este paso prepara una copia de los datos para los análisis. El CSV original se conserva. "
+    "Si usarás clasificación o regresión, selecciona aquí la variable objetivo para evitar que "
+    "el agente la considere irrelevante. Los valores faltantes de predictores se conservan aquí "
+    "para imputarlos después de separar entrenamiento y prueba."
 )
 
-model = obtener_modelo()
+model = obtener_modelo(requiere_eda=False)
 if model is None:
     st.stop()
 
@@ -26,13 +29,29 @@ ejecutar = c2.button("Ejecutar agente", type="primary", width="stretch")
 if ejecutar:
     with st.spinner("El agente está analizando los datos..."):
         agente = AgenteEDA(df, objetivo=None if objetivo == "(ninguna)" else objetivo).ejecutar()
+        modelo_eda = DataModel()
+        modelo_eda.cargar_dataframe(agente.datos_para_modelos)
+        limpiar_resultados()
         st.session_state["agente_eda"] = agente
         st.session_state["agente_eda_html"] = agente.informe_html()
+        st.session_state["modelo_eda"] = modelo_eda
+        st.session_state["eda_archivo_hash"] = st.session_state.get("archivo_hash")
+        st.session_state["eda_objetivo"] = None if objetivo == "(ninguna)" else objetivo
 
 agente = st.session_state.get("agente_eda")
 if agente is None:
     st.info("Presione **Ejecutar agente** para iniciar el análisis.")
     st.stop()
+
+objetivo_actual = None if objetivo == "(ninguna)" else objetivo
+if st.session_state.get("eda_objetivo") != objetivo_actual:
+    st.session_state.pop("modelo_eda", None)
+    st.session_state.pop("eda_archivo_hash", None)
+if (
+    st.session_state.get("eda_archivo_hash") != st.session_state.get("archivo_hash")
+    or st.session_state.get("eda_objetivo") != objetivo_actual
+):
+    st.warning("El archivo o la variable objetivo cambiaron. Vuelve a ejecutar el EDA antes de usar los modelos.")
 
 # ---------------------------------------------------------------------------
 # Síntesis
@@ -92,9 +111,9 @@ d1.download_button(
     width="stretch",
 )
 d2.download_button(
-    "Descargar datos con la limpieza sugerida (CSV)",
-    data=agente.datos_limpios.to_csv(index=False).encode("utf-8"),
-    file_name="datos_limpios_agente.csv",
+    "Descargar datos preparados para modelos (CSV)",
+    data=agente.datos_para_modelos.to_csv(index=False).encode("utf-8"),
+    file_name="datos_preparados_agente.csv",
     mime="text/csv",
     width="stretch",
 )

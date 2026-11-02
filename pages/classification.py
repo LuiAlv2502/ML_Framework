@@ -368,7 +368,7 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
 # ---------------------------------------------------------------------------
 st.title("Supervisado - Clasificación")
 
-model = obtener_modelo()
+model = obtener_modelo(requiere_objetivo=True)
 if model is None:
     st.stop()
 
@@ -399,6 +399,12 @@ with st.container(border=True):
         columnas,
         index=objetivo_inicial,
     )
+    etiquetas_faltantes = int(df[objetivo].isna().sum())
+    if etiquetas_faltantes:
+        st.warning(
+            f"Se excluirán {etiquetas_faltantes} filas sin etiqueta en '{objetivo}'; "
+            "no se inventan valores para la variable que se va a predecir."
+        )
     objetivo_clases = df[objetivo].nunique()
     if objetivo_clases > MAX_CLASES:
         st.warning(

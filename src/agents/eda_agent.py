@@ -78,6 +78,7 @@ class AgenteEDA:
         self.bitacora: list[dict[str, str]] = []
         self.sintesis: dict[str, Any] = {}
         self.imputadas: dict[str, float] = {}  # columna -> % de valores imputados
+        self._datos_para_modelos: pd.DataFrame | None = None
 
     # ==================================================================
     # Utilidades
@@ -86,6 +87,20 @@ class AgenteEDA:
     def datos_limpios(self) -> pd.DataFrame:
         """Datos después de las limpiezas que el agente aplicó sobre la copia."""
         return self.trabajo.dataframe
+
+    @property
+    def datos_para_modelos(self) -> pd.DataFrame:
+        """Copia estructuralmente limpia, sin imputar usando todo el conjunto."""
+        if self._datos_para_modelos is None:
+            raise RuntimeError("Ejecute el agente antes de solicitar los datos para modelos.")
+        return self._datos_para_modelos.copy()
+
+    def _preparar_datos_para_modelos(self) -> None:
+        datos = self.datos_limpios.copy()
+        for columna in self.percepcion["ceros_sospechosos"]:
+            if columna in datos.columns:
+                datos[columna] = datos[columna].replace(0, np.nan)
+        self._datos_para_modelos = datos
 
     def _registrar(self, etapa: str, observacion: str, razonamiento: str, accion: str) -> None:
         self.bitacora.append(
@@ -298,6 +313,10 @@ class AgenteEDA:
         self.trabajo.dataframe = df.rename(columns=nuevos)
         if self.objetivo in nuevos:
             self.objetivo = nuevos[self.objetivo]
+        self.percepcion["ceros_sospechosos"] = {
+            nuevos.get(columna, columna): cantidad
+            for columna, cantidad in self.percepcion["ceros_sospechosos"].items()
+        }
         return Paso(
             numero,
             "Estandarizar nombres de columnas",
@@ -670,6 +689,8 @@ class AgenteEDA:
         }
         numero = 1
         for item in self.plan:
+            if item["clave"] == "faltantes":
+                self._preparar_datos_para_modelos()
             if not item["ejecutar"]:
                 self._registrar("omisión", item["paso"], item["razon"], "Paso omitido.")
                 continue
@@ -677,6 +698,8 @@ class AgenteEDA:
             self.pasos.append(paso)
             self._registrar(paso.titulo, paso.observacion, paso.razonamiento, paso.accion)
             numero += 1
+        if self._datos_para_modelos is None:
+            self._preparar_datos_para_modelos()
         self._sintetizar()
         return self
 

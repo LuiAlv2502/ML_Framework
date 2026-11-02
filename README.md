@@ -28,12 +28,13 @@ Streamlit abrirá la aplicación en el navegador. Para detenerla, presione `Ctrl
 ## Uso de la aplicación
 
 1. Ejecute `streamlit run app.py` desde la raíz del proyecto.
-2. En la barra lateral, cargue un archivo CSV. El mismo conjunto de datos queda disponible en las páginas de la aplicación durante la sesión.
-3. Seleccione una página desde la navegación:
+2. En la barra lateral, cargue un archivo CSV. El CSV original se conserva y queda disponible durante la sesión.
+3. Ejecute **Agente inteligente EDA** antes de usar los análisis. Si planea clasificación o regresión, seleccione ahí la variable objetivo; para análisis no supervisado puede dejarla sin seleccionar. El EDA prepara una copia de trabajo y no modifica el archivo original.
+4. Seleccione una página desde la navegación:
    - **No supervisado**: vista previa, estadísticas descriptivas, conteo de nulos, correlación e histogramas de columnas numéricas; reducción dimensional con PCA, t-SNE o UMAP; agrupamiento con K-Means o HAC y método del codo.
    - **Supervisado - Clasificación**: seleccione la variable objetivo, la proporción de prueba y el algoritmo; entrene y consulte métricas, matriz de confusión e informe por clase.
-   - **Supervisado - Predicción**: página reservada para regresión; el módulo todavía no está implementado.
-4. La aplicación muestra los controles pertinentes para los parámetros del método elegido.
+   - **Supervisado - Predicción**: seleccione una variable objetivo numérica, configure la partición y el algoritmo de regresión, y consulte las métricas.
+5. Los análisis usan la copia preparada por el EDA. Los valores faltantes de predictores supervisados se imputan en el pipeline después de dividir entrenamiento y prueba; las filas sin etiqueta objetivo no se usan para entrenar. En no supervisado, las variables faltantes se imputan antes de codificar y escalar.
 
 El archivo `data/drug200.csv` se incluye como conjunto de ejemplo. También puede cargar otro CSV desde la interfaz.
 

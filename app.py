@@ -19,6 +19,7 @@ pg = st.navigation(
             "pages/agent_eda.py",
             title="Agente inteligente EDA",
             icon=":material/smart_toy:",
+            default=True,
         ),
         st.Page(
             "pages/unsupervised.py",

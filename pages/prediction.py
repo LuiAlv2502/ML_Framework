@@ -329,7 +329,7 @@ def _mostrar_indices(label, resultado, exp_idx, objetivo):
 # ---------------------------------------------------------------------------
 st.title("Supervisado - Predicción")
 
-model = obtener_modelo()
+model = obtener_modelo(requiere_objetivo=True)
 if model is None:
     st.stop()
 
@@ -355,6 +355,12 @@ with st.container(border=True):
         index=len(numericas) - 1,
         key="reg_objetivo",
     )
+    etiquetas_faltantes = int(df[objetivo].isna().sum())
+    if etiquetas_faltantes:
+        st.warning(
+            f"Se excluirán {etiquetas_faltantes} filas sin valor en '{objetivo}'; "
+            "no se imputan los resultados que el modelo debe predecir."
+        )
     if df[objetivo].nunique() <= 10:
         st.warning(
             f"'{objetivo}' tiene pocos valores distintos; podría ser más adecuada "

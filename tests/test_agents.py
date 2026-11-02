@@ -36,6 +36,32 @@ def test_agente_detecta_ceros_que_son_datos_faltantes():
     assert "Pregnancies" not in sospechosos  # 0 embarazos es un valor válido
 
 
+def test_datos_para_modelos_conservan_nulos_para_imputarlos_despues():
+    df = pd.read_csv(ROOT / "data" / "diabetes.csv")
+    df.loc[:10, "Glucose"] = np.nan
+    agente = _ejecutar(df, objetivo="Outcome")
+
+    preparados = agente.datos_para_modelos
+
+    assert preparados["Glucose"].isna().any()
+    assert df["Glucose"].isna().any()
+    assert preparados["Outcome"].notna().all()
+    assert df["Outcome"].notna().all()
+    assert "Outcome" in preparados.columns
+
+
+def test_datos_para_modelos_marca_ceros_sospechosos_tras_renombrar_columnas():
+    df = pd.read_csv(ROOT / "data" / "diabetes.csv").rename(
+        columns={"Glucose": "Glucose level"}
+    )
+    agente = _ejecutar(df, objetivo="Outcome")
+
+    preparados = agente.datos_para_modelos
+
+    assert "Glucose_level" in preparados.columns
+    assert preparados["Glucose_level"].isna().sum() == int((df["Glucose level"] == 0).sum())
+
+
 def test_agente_omite_pasos_innecesarios_con_su_razon():
     df = pd.read_csv(ROOT / "data" / "drug200.csv")
 
@@ -94,5 +120,3 @@ def test_agente_rechaza_objetivo_inexistente():
 
     with pytest.raises(KeyError):
         AgenteEDA(df, objetivo="no_existe")
-
-

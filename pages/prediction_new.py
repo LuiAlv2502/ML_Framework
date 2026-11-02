@@ -329,7 +329,7 @@ def _mostrar_indices(label, resultado, exp_idx, objetivo):
 # ---------------------------------------------------------------------------
 st.title("Supervisado - Predicción")
 
-model = obtener_modelo()
+model = obtener_modelo(requiere_objetivo=True)
 if model is None:
     st.stop()
 
