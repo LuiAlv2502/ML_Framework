@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-from Eda.dataframe import DataFrame  # noqa: E402
+from EDA.dataframe import DataFrame  # noqa: E402
 
 from . import llm  # noqa: E402
 

@@ -7,6 +7,8 @@ from __future__ import annotations
 import importlib.util
 import os
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 
 MODELO_POR_DEFECTO = os.environ.get("GEMINI_MODEL") or "gemini-3.5-flash"
@@ -27,6 +29,45 @@ SISTEMA = (
 
 class ErrorLLM(RuntimeError):
     """El agente no pudo usar el LLM (falta la clave, el paquete, red, saldo...)."""
+
+
+def _codigo_estado(exc: Exception) -> int | None:
+    codigo = getattr(exc, "status_code", None)
+    if codigo is None:
+        respuesta = getattr(exc, "response", None)
+        codigo = getattr(respuesta, "status_code", None)
+    try:
+        return int(codigo) if codigo is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _espera_reintento(exc: Exception, intento: int) -> float:
+    respuesta = getattr(exc, "response", None)
+    cabeceras = getattr(respuesta, "headers", {}) or {}
+    cabeceras = {str(nombre).lower(): valor for nombre, valor in cabeceras.items()}
+
+    milisegundos = cabeceras.get("retry-after-ms")
+    if milisegundos is not None:
+        try:
+            return max(0.0, float(milisegundos) / 1000)
+        except (TypeError, ValueError):
+            pass
+
+    reintentar_despues = cabeceras.get("retry-after")
+    if reintentar_despues is not None:
+        try:
+            return max(0.0, float(reintentar_despues))
+        except (TypeError, ValueError):
+            try:
+                fecha = parsedate_to_datetime(str(reintentar_despues))
+                if fecha.tzinfo is None:
+                    fecha = fecha.replace(tzinfo=timezone.utc)
+                return max(0.0, (fecha - datetime.now(timezone.utc)).total_seconds())
+            except (TypeError, ValueError, OverflowError):
+                pass
+
+    return min(5 * (2 ** intento), 60)
 
 
 def _clave() -> str | None:
@@ -56,14 +97,26 @@ def crear_cliente():
 
 
 def completar(cliente, reintentos: int = 4, **kwargs):
-    """chat.completions.create con espera y reintento ante límites de tasa (429) del plan gratuito."""
+    """Reintenta límites temporales usando Retry-After cuando el servidor lo proporciona."""
     for intento in range(reintentos + 1):
         try:
             return cliente.chat.completions.create(**kwargs)
         except Exception as exc:
-            if type(exc).__name__ not in ("RateLimitError", "InternalServerError") or intento == reintentos:
+            codigo = _codigo_estado(exc)
+            rate_limit = codigo == 429 or type(exc).__name__ == "RateLimitError"
+            error_temporal = rate_limit or codigo is not None and codigo >= 500 or (
+                type(exc).__name__ == "InternalServerError"
+            )
+            if not error_temporal or intento == reintentos:
+                if rate_limit:
+                    raise ErrorLLM(
+                        "Gemini mantuvo el límite de solicitudes (HTTP 429) después de "
+                        f"{reintentos + 1} intentos. Puede ser un límite temporal o una cuota "
+                        "agotada; revise la cuota de Gemini AI Studio y vuelva a intentarlo "
+                        "cuando se restablezca."
+                    ) from exc
                 raise
-            time.sleep(15 * (intento + 1))
+            time.sleep(_espera_reintento(exc, intento))
 
 
 def recortar(texto: Any, limite: int = 500) -> Any:

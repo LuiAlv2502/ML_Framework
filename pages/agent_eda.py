@@ -6,17 +6,15 @@ from pages._shared import limpiar_resultados, obtener_modelo
 
 st.title("Agente inteligente de EDA")
 st.caption(
-    "Este paso prepara una copia de los datos para los análisis. El CSV original se conserva. "
-    "Si usarás clasificación o regresión, selecciona aquí la variable objetivo para evitar que "
-    "el agente la considere irrelevante. Los valores faltantes de predictores se conservan aquí "
-    "para imputarlos después de separar entrenamiento y prueba."
+    "Ejecutar el agente es opcional. Si lo haces, su copia preparada pasa a ser la versión usada "
+    "por los análisis; el CSV original se conserva."
 )
 
-model = obtener_modelo(requiere_eda=False)
+model = obtener_modelo()
 if model is None:
     st.stop()
 
-df = model.dataframe.dataframe
+df = st.session_state["model"].dataframe.dataframe
 
 c1, c2 = st.columns([2, 1])
 objetivo = c1.selectbox(
@@ -37,6 +35,7 @@ if ejecutar:
         st.session_state["modelo_eda"] = modelo_eda
         st.session_state["eda_archivo_hash"] = st.session_state.get("archivo_hash")
         st.session_state["eda_objetivo"] = None if objetivo == "(ninguna)" else objetivo
+        st.session_state["modo_datos_activos"] = "agente"
 
 agente = st.session_state.get("agente_eda")
 if agente is None:
@@ -45,13 +44,7 @@ if agente is None:
 
 objetivo_actual = None if objetivo == "(ninguna)" else objetivo
 if st.session_state.get("eda_objetivo") != objetivo_actual:
-    st.session_state.pop("modelo_eda", None)
-    st.session_state.pop("eda_archivo_hash", None)
-if (
-    st.session_state.get("eda_archivo_hash") != st.session_state.get("archivo_hash")
-    or st.session_state.get("eda_objetivo") != objetivo_actual
-):
-    st.warning("El archivo o la variable objetivo cambiaron. Vuelve a ejecutar el EDA antes de usar los modelos.")
+    st.info("Cambió la variable objetivo seleccionada; vuelve a ejecutar el agente si quieres actualizar su informe.")
 
 # ---------------------------------------------------------------------------
 # Síntesis

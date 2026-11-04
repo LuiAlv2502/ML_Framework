@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from Eda.dataframe import DataFrame
+from EDA.dataframe import DataFrame
 
 
 @dataclass(frozen=True)

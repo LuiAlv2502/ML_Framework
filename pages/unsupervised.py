@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from agents import AgenteNoSupervisado
 from pages._shared import obtener_modelo
 from pages._theme import (
     AMARILLO,
@@ -18,7 +19,7 @@ from pages._theme import (
 
 st.title("Estudio no supervisado")
 
-model = obtener_modelo()
+model = obtener_modelo(recomendar_eda=True)
 if model is None:
     st.stop()
 
@@ -26,8 +27,14 @@ st.caption("La exploración de datos (EDA) está disponible en su propia página
 
 df_original = model.dataframe.dataframe
 columnas_color = [c for c in df_original.columns if df_original[c].nunique() <= 15]
+archivo_hash = st.session_state.get("archivo_hash")
+if st.session_state.get("no_supervisado_archivo_hash") != archivo_hash:
+    st.session_state.pop("agente_no_supervisado", None)
+    st.session_state["no_supervisado_archivo_hash"] = archivo_hash
 
-tab_reduccion, tab_cluster = st.tabs(["Reducción dimensional", "Clustering"])
+tab_reduccion, tab_cluster, tab_agente = st.tabs(
+    ["Reducción dimensional", "Clustering", "Agente inteligente"]
+)
 
 
 def _color_puntos(columna):
@@ -191,6 +198,130 @@ with tab_reduccion:
                     grafico(fig, height=600)
             except Exception as error:
                 st.error(f"Error: {error}")
+
+with tab_agente:
+    st.caption(
+        "El agente selecciona análisis permitidos; PCA y los algoritmos de clustering se ejecutan "
+        "en Python. Gemini recibe métricas agregadas, no las filas del CSV."
+    )
+    if st.button("Ejecutar agente no supervisado", type="primary"):
+        with st.spinner("El agente está analizando los datos..."):
+            try:
+                agente_nuevo = AgenteNoSupervisado(df_original).ejecutar()
+            except Exception as error:
+                st.error(f"No se pudo ejecutar el agente: {type(error).__name__}: {error}")
+            else:
+                st.session_state["agente_no_supervisado"] = agente_nuevo
+                st.session_state["no_supervisado_archivo_hash"] = archivo_hash
+
+    agente = st.session_state.get("agente_no_supervisado")
+    if agente is not None:
+        if agente.modo == "llm":
+            st.success(f"Análisis dirigido por el LLM ({agente.modelo}).")
+        else:
+            st.warning(
+                "No se pudo usar el LLM; se usó el análisis por reglas. "
+                f"Motivo: {agente.motivo_respaldo}"
+            )
+
+        st.subheader("Decisiones del agente")
+        for item in agente.plan:
+            icono = "✅" if item.get("ejecutar") else "⏭️"
+            st.markdown(f"{icono} **{item['paso']}** — {item['razon']}")
+
+        if agente.analisis_llm:
+            st.subheader("Interpretación del LLM")
+            st.write(agente.analisis_llm)
+
+        if "pca" in agente.resultados:
+            resultado_pca = agente.resultados["pca"]
+            st.subheader("PCA")
+            st.metric("Varianza explicada acumulada", f"{resultado_pca['varianza_acumulada']:.2%}")
+            componentes = resultado_pca["componentes"]
+            if {"PC1", "PC2"} <= set(componentes.columns):
+                fig_pca = _dispersion(
+                    componentes,
+                    "PC1",
+                    "PC2",
+                    etiquetas={"PC1": "PC1", "PC2": "PC2"},
+                    titulo="PCA seleccionado por el agente",
+                )
+                grafico(brillo(fig_pca), height=500)
+            st.markdown("**Variables más influyentes por componente**")
+            st.dataframe(
+                pd.DataFrame(resultado_pca["variables_mas_influyentes"]).fillna(""),
+                width="stretch",
+            )
+
+        if "codo" in agente.resultados:
+            inercias = agente.resultados["codo"]["serie"]
+            st.subheader("Método del codo")
+            fig_codo = px.line(
+                x=inercias.index,
+                y=inercias.to_numpy(),
+                markers=True,
+                labels={"x": "Número de grupos (k)", "y": "Inercia"},
+                title="Inercia por número de grupos",
+            )
+            fig_codo.update_traces(line=dict(color=AMARILLO, width=3))
+            grafico(brillo(fig_codo), height=420)
+
+        for clave in ("kmeans", "hac"):
+            if clave not in agente.resultados:
+                continue
+            resultado_cluster = agente.resultados[clave]
+            st.subheader(f"{resultado_cluster['algoritmo']}")
+            m1, m2 = st.columns(2)
+            m1.metric("Silhouette", f"{resultado_cluster['silhouette']:.4f}")
+            m2.metric("Grupos encontrados", resultado_cluster["grupos_obtenidos"])
+            st.caption("Silhouette va de -1 a 1; valores mayores suelen indicar grupos más separados.")
+
+            tamanos = pd.Series(resultado_cluster["tamanos"], name="Observaciones")
+            fig_tamanos = px.bar(
+                x=tamanos.index.astype(str),
+                y=tamanos.to_numpy(),
+                labels={"x": "Grupo", "y": "Observaciones"},
+                title="Tamaño de los grupos",
+                color=tamanos.index.astype(str),
+                color_discrete_sequence=SECUENCIA,
+            )
+            fig_tamanos.update_layout(showlegend=False)
+            grafico(brillo(fig_tamanos), height=360)
+
+            perfil = resultado_cluster["perfil_numerico"]
+            if perfil:
+                st.markdown("**Promedios numéricos por grupo**")
+                st.dataframe(pd.DataFrame.from_dict(perfil, orient="index"), width="stretch")
+            perfil_categorico = resultado_cluster["perfil_categorico"]
+            if any(perfil_categorico.values()):
+                st.markdown("**Categorías más frecuentes por grupo**")
+                st.dataframe(
+                    pd.concat(
+                        {
+                            grupo: pd.DataFrame.from_dict(datos, orient="index")
+                            for grupo, datos in perfil_categorico.items()
+                            if datos
+                        },
+                        names=["Grupo", "Variable"],
+                    ),
+                    width="stretch",
+                )
+            with st.expander("Datos con grupo asignado"):
+                st.dataframe(resultado_cluster["resultado"], width="stretch", height=300)
+
+        if not agente.resultados:
+            st.info("El agente no ejecutó análisis. Revisa las razones en sus decisiones.")
+        with st.expander("Bitácora de razonamiento"):
+            st.dataframe(agente.bitacora, width="stretch")
+        st.download_button(
+            "Descargar informe del agente (HTML)",
+            data=agente.informe_html().encode("utf-8"),
+            file_name="informe_agente_no_supervisado.html",
+            mime="text/html",
+            width="stretch",
+        )
+    else:
+        st.info("Pulsa **Ejecutar agente no supervisado** para iniciar el análisis.")
 
 with tab_cluster:
     c1, c2, c3 = st.columns(3)

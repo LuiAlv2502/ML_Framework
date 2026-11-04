@@ -6,7 +6,12 @@ import streamlit as st
 
 from agents import AgenteEDA
 from model import DataModel
-from pages._shared import limpiar_resultados, obtener_modelo
+from pages._shared import (
+    limpiar_resultados,
+    obtener_modelo,
+    restaurar_csv_original,
+    seleccionar_modelo_activo,
+)
 from pages._theme import (
     AMARILLO,
     CIAN,
@@ -21,7 +26,7 @@ from pages._theme import (
 
 st.title("Exploración de datos (EDA)")
 
-modelo_base = obtener_modelo(requiere_eda=False)
+modelo_base = obtener_modelo()
 if modelo_base is None:
     st.stop()
 
@@ -31,12 +36,12 @@ if modelo_base is None:
 with st.container(border=True):
     st.markdown("**Agente inteligente de EDA**")
     st.caption(
-        "El agente ejecuta automáticamente todas las operaciones del EDA y prepara una copia "
-        "de los datos para los modelos. El CSV original se conserva. Si usarás clasificación o "
-        "regresión, selecciona la variable objetivo."
+        "El EDA manual está disponible aunque no ejecutes el agente. Ejecutarlo es opcional: "
+        "si lo haces, su copia preparada será la que usen los modelos. El CSV original se conserva."
     )
     a1, a2 = st.columns([2, 1])
-    columnas_base = modelo_base.dataframe.dataframe.columns.tolist()
+    datos_csv = st.session_state["model"].dataframe.dataframe
+    columnas_base = datos_csv.columns.tolist()
     objetivo_previo = st.session_state.get("eda_objetivo")
     objetivo = a1.selectbox(
         "Variable objetivo (opcional)",
@@ -48,7 +53,7 @@ with st.container(border=True):
     a2.write("")
     if a2.button("Ejecutar agente", type="primary", width="stretch"):
         with st.spinner("El agente está analizando los datos..."):
-            agente_nuevo = AgenteEDA(modelo_base.dataframe.dataframe, objetivo=objetivo_actual).ejecutar()
+            agente_nuevo = AgenteEDA(datos_csv, objetivo=objetivo_actual).ejecutar()
             modelo_eda = DataModel()
             modelo_eda.cargar_dataframe(agente_nuevo.datos_para_modelos)
             limpiar_resultados()
@@ -57,37 +62,43 @@ with st.container(border=True):
             st.session_state["modelo_eda"] = modelo_eda
             st.session_state["eda_archivo_hash"] = st.session_state.get("archivo_hash")
             st.session_state["eda_objetivo"] = objetivo_actual
+            st.session_state["modo_datos_activos"] = "agente"
 
 agente = st.session_state.get("agente_eda")
 if agente is not None and st.session_state.get("eda_objetivo") != objetivo_actual:
-    st.session_state.pop("modelo_eda", None)
-    st.session_state.pop("eda_archivo_hash", None)
-    st.warning("La variable objetivo cambió. Vuelve a ejecutar el agente antes de usar los modelos.")
+    st.info("Cambió la variable objetivo seleccionada; vuelve a ejecutar el agente si quieres actualizar su informe.")
 
-modelo_eda = st.session_state.get("modelo_eda")
-eda_vigente = (
-    modelo_eda is not None
-    and st.session_state.get("eda_archivo_hash") == st.session_state.get("archivo_hash")
+model = seleccionar_modelo_activo(
+    st.session_state.get("modo_datos_activos", "original"),
+    st.session_state["model"],
+    st.session_state.get("modelo_manual"),
+    st.session_state.get("modelo_eda"),
+    st.session_state.get("archivo_hash"),
+    st.session_state.get("eda_archivo_hash"),
 )
-model = modelo_eda if eda_vigente else modelo_base
-st.caption(
-    "Las pestañas de exploración muestran los **datos preparados por el agente**."
-    if eda_vigente
-    else "Las pestañas de exploración muestran los **datos originales** (el agente aún no se ha ejecutado)."
-)
+fuente_activa = st.session_state.get("modo_datos_activos", "original")
+etiqueta_fuente = {
+    "original": "CSV original",
+    "manual": "cambios hechos manualmente",
+    "agente": "copia preparada por el agente EDA",
+}.get(fuente_activa, "CSV original")
+st.caption(f"El EDA muestra los datos activos: **{etiqueta_fuente}**.")
 
 df = model.dataframe.dataframe
 numericas = df.select_dtypes(include=np.number).columns.tolist()
 categoricas = [c for c in df.columns if c not in numericas]
 
 
-def _aplicar(operacion, mensaje):
+def _aplicar(operacion, mensaje, guardar_como_manual=True):
     """Ejecuta una operación de limpieza del modelo e invalida resultados previos."""
     try:
         operacion()
     except (KeyError, TypeError, ValueError) as error:
         st.session_state["eda_mensaje"] = ("error", f"No se pudo aplicar: {error}")
     else:
+        if guardar_como_manual:
+            st.session_state["modelo_manual"] = model
+            st.session_state["modo_datos_activos"] = "manual"
         limpiar_resultados()
         st.session_state["eda_mensaje"] = ("ok", mensaje)
     st.rerun()
@@ -464,7 +475,7 @@ with tab_limpieza:
         (st.success if mensaje[0] == "ok" else st.error)(mensaje[1])
 
     st.caption(
-        "Las operaciones modifican los datos usados en todas las páginas. "
+        "Las operaciones manuales pasan a ser los datos usados en todas las páginas. "
         "Al aplicarlas se descartan particiones y modelos ya entrenados."
     )
 
@@ -532,7 +543,11 @@ with tab_limpieza:
     st.divider()
     b1, b2 = st.columns(2)
     if b1.button("Restaurar datos originales", type="primary", width="stretch"):
-        _aplicar(model.restaurar, "Datos restaurados al CSV original.")
+        _aplicar(
+            restaurar_csv_original,
+            "Datos restaurados al CSV original.",
+            guardar_como_manual=False,
+        )
     b2.download_button(
         "Descargar datos actuales (CSV)",
         data=df.to_csv(index=False).encode("utf-8"),

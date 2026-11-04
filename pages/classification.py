@@ -368,7 +368,7 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
 # ---------------------------------------------------------------------------
 st.title("Supervisado - Clasificación")
 
-model = obtener_modelo(requiere_objetivo=True)
+model = obtener_modelo(recomendar_eda=True)
 if model is None:
     st.stop()
 

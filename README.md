@@ -25,16 +25,24 @@ python -m streamlit run app.py
 
 Streamlit abrirá la aplicación en el navegador. Para detenerla, presione `Ctrl+C` en la terminal.
 
+Para habilitar los agentes con Gemini, configure `GEMINI_API_KEY` antes de iniciar la app. En PowerShell:
+
+```powershell
+$env:GEMINI_API_KEY = "su_clave"
+```
+
+En CMD, use `set "GEMINI_API_KEY=su_clave"`. Si no configura la variable o Gemini no está disponible, los agentes usan su respaldo basado en reglas. Ante HTTP 429, el cliente respeta el tiempo de espera que informe Gemini y reintenta; si la cuota sigue agotada, revise los límites de AI Studio y vuelva a intentarlo cuando se restablezcan. Los reintentos no pueden evitar una cuota diaria agotada. Nunca incluya la clave en el repositorio ni la comparta.
+
 ## Uso de la aplicación
 
 1. Ejecute `streamlit run app.py` desde la raíz del proyecto.
 2. En la barra lateral, cargue un archivo CSV. El CSV original se conserva y queda disponible durante la sesión.
-3. Ejecute **Agente inteligente EDA** antes de usar los análisis. Si planea clasificación o regresión, seleccione ahí la variable objetivo; para análisis no supervisado puede dejarla sin seleccionar. El EDA prepara una copia de trabajo y no modifica el archivo original.
+3. La página **EDA** es opcional: puede revisar el resumen, las distribuciones y las relaciones, y continuar directamente con los análisis. Si ejecuta **Agente inteligente EDA**, su preparación se activa para los análisis; si planea clasificación o regresión, puede seleccionar ahí la variable objetivo para orientar sus recomendaciones.
 4. Seleccione una página desde la navegación:
    - **No supervisado**: vista previa, estadísticas descriptivas, conteo de nulos, correlación e histogramas de columnas numéricas; reducción dimensional con PCA, t-SNE o UMAP; agrupamiento con K-Means o HAC y método del codo.
    - **Supervisado - Clasificación**: seleccione la variable objetivo, la proporción de prueba y el algoritmo; entrene y consulte métricas, matriz de confusión e informe por clase.
    - **Supervisado - Predicción**: seleccione una variable objetivo numérica, configure la partición y el algoritmo de regresión, y consulte las métricas.
-5. Los análisis usan la copia preparada por el EDA. Los valores faltantes de predictores supervisados se imputan en el pipeline después de dividir entrenamiento y prueba; las filas sin etiqueta objetivo no se usan para entrenar. En no supervisado, las variables faltantes se imputan antes de codificar y escalar.
+5. Los análisis usan el CSV original si no se ha aplicado ningún cambio, los cambios manuales de limpieza y transformación si los hiciste en **EDA**, o la copia preparada por el agente si lo ejecutaste. La última preparación o cambio realizado determina los datos activos; **Restaurar datos originales** vuelve al CSV cargado. Los valores faltantes de predictores supervisados se imputan en el pipeline después de dividir entrenamiento y prueba; las filas sin etiqueta objetivo no se usan para entrenar. En no supervisado, las variables faltantes se imputan antes de codificar y escalar.
 
 El archivo `data/drug200.csv` se incluye como conjunto de ejemplo. También puede cargar otro CSV desde la interfaz.
 
@@ -47,6 +55,7 @@ En la página **No supervisado** se ofrecen:
 - PCA en dos o tres dimensiones, con varianza explicada y visualizaciones.
 - t-SNE y UMAP en dos o tres dimensiones, con parámetros configurables.
 - K-Means y HAC, selección del número de clústeres, método del codo y visualización de los grupos proyectados mediante PCA.
+- Agente inteligente no supervisado: puede ejecutar PCA, método del codo, K-Means y HAC, y muestra métricas y perfiles calculados por Python. Gemini recibe el perfil agregado y los resultados, no las filas del CSV; si no está disponible, se usa un flujo por reglas. HAC se limita a conjuntos de hasta 2,000 filas.
 
 En **Supervisado - Clasificación** se ofrecen KNN, árbol de decisión, Random Forest, Gradient Boosting, AdaBoost y XGBoost. Se presentan *accuracy*, precisión macro, *recall* macro, F1 macro, matriz de confusión e informe por clase.
 
