@@ -5,16 +5,19 @@ Los pasos siguen el tutorial "Intro to Exploratory Data Analysis (EDA) in Python
 (Kaggle): tipos de datos, columnas irrelevantes, renombrar columnas, duplicados,
 valores faltantes, valores atípicos y relaciones entre variables.
 
-El razonamiento es basado en reglas: cada decisión queda registrada con la
-observación que la provocó y la razón por la que se tomó, de modo que sea
-verificable. El agente NUNCA modifica los datos originales: aplica la limpieza
-sobre una copia y la entrega como sugerencia.
+El razonamiento es agéntico: un LLM (Google Gemini, requiere GEMINI_API_KEY o un cliente inyectado) decide qué
+pasos ejecutar, en qué orden y por qué, usando los pasos como herramientas (tool calling). Si el LLM no está
+disponible o falla, se usa el plan por reglas (modo="reglas") y el motivo queda en motivo_respaldo. Al LLM solo se le envía el
+perfil agregado (nombres de columnas y conteos), nunca las filas. Cada decisión queda registrada con la
+observación que la provocó y la razón por la que se tomó, de modo que sea verificable. El agente NUNCA
+modifica los datos originales: aplica la limpieza sobre una copia y la entrega como sugerencia.
 """
 from __future__ import annotations
 
 import base64
 import html
 import io
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -26,7 +29,9 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-from EDA.dataframe import DataFrame  # noqa: E402
+from Eda.dataframe import DataFrame  # noqa: E402
+
+from . import llm  # noqa: E402
 
 # Umbrales que usa el agente para razonar (se documentan en el informe).
 UMBRAL_NULOS_COLUMNA = 0.60     # > 60 % de nulos: la columna aporta poca información
@@ -57,7 +62,9 @@ class Paso:
 class AgenteEDA:
     """Agente que realiza un EDA completo, interpreta cada paso y recomienda."""
 
-    def __init__(self, datos, objetivo: str | None = None, max_graficos: int = 12):
+    def __init__(self, datos, objetivo: str | None = None, max_graficos: int = 12,
+                 modelo: str = llm.MODELO_POR_DEFECTO, cliente=None,
+                 max_iteraciones: int = 30):
         if isinstance(datos, DataFrame):
             datos = datos.dataframe
         if not isinstance(datos, pd.DataFrame):
@@ -68,10 +75,19 @@ class AgenteEDA:
             raise KeyError(f"La variable objetivo '{objetivo}' no existe.")
 
         self.original = datos.copy()
-        # Copia de trabajo: se usa la clase DataFrame del framework.
-        self.trabajo = DataFrame(datos)
         self.objetivo = objetivo
         self.max_graficos = max_graficos
+        self.modelo = modelo
+        self.cliente = cliente
+        self.max_iteraciones = max_iteraciones
+        self.modo = "llm"
+        self.motivo_respaldo = ""
+        self._reiniciar()
+
+    def _reiniciar(self) -> None:
+        # Copia de trabajo: se usa la clase DataFrame del framework.
+        self.trabajo = DataFrame(self.original.copy())
+        self.analisis_llm = ""
         self.percepcion: dict[str, Any] = {}
         self.plan: list[dict[str, str]] = []
         self.pasos: list[Paso] = []
@@ -226,7 +242,7 @@ class AgenteEDA:
                 "Tipo": df.dtypes.astype(str),
                 "Valores únicos": df.nunique(),
                 "Nulos": df.isna().sum(),
-                "Ejemplo": [df[c].dropna().iloc[0] if df[c].notna().any() else None for c in df.columns],
+                "Ejemplo": [str(df[c].dropna().iloc[0]) if df[c].notna().any() else None for c in df.columns],
             }
         )
         # Razonamiento: ¿hay números guardados como texto o categorías codificadas como número?
@@ -674,9 +690,49 @@ class AgenteEDA:
     # 4. EJECUTAR TODO Y SINTETIZAR
     # ==================================================================
     def ejecutar(self) -> AgenteEDA:
+        """Análisis dirigido por el LLM; si no está disponible o falla, usa el plan por reglas."""
+        self.modo, self.motivo_respaldo = "llm", ""
+        if self.cliente is None:
+            self.motivo_respaldo = llm.motivo_no_disponible() or ""
+        if not self.motivo_respaldo:
+            try:
+                return self._ejecutar_con_llm()
+            except Exception as exc:  # red, clave inválida, cuota, respuesta inesperada...
+                self.motivo_respaldo = str(exc) if isinstance(exc, llm.ErrorLLM) else f"{type(exc).__name__}: {exc}"
+        self.modo = "reglas"
+        self._reiniciar()
+        return self._ejecutar_reglas()
+
+    def _ejecutar_reglas(self) -> AgenteEDA:
         self.percibir()
         self.planificar()
-        acciones = {
+        acciones = self._acciones()
+        for item in self.plan:
+            if item["clave"] == "faltantes":
+                self._preparar_datos_para_modelos()
+            if not item["ejecutar"]:
+                self._registrar("omisión", item["paso"], item["razon"], "Paso omitido.")
+                continue
+            paso = acciones[item["clave"]](len(self.pasos) + 1)
+            self.pasos.append(paso)
+            self._registrar(paso.titulo, paso.observacion, paso.razonamiento, paso.accion)
+        if self._datos_para_modelos is None:
+            self._preparar_datos_para_modelos()
+        self._sintetizar()
+        return self
+
+    @staticmethod
+    def _llamada_como_dict(c: Any) -> dict[str, Any]:
+        # Se conserva el objeto completo: Gemini 3 exige devolver la thought_signature (extra_content).
+        if hasattr(c, "model_dump"):
+            d = c.model_dump(exclude_none=True)
+            d["type"] = "function"
+            return d
+        return {"id": c.id, "type": "function",
+                "function": {"name": c.function.name, "arguments": c.function.arguments}}
+
+    def _acciones(self) -> dict[str, Any]:
+        return {
             "estructura": self._paso_estructura,
             "irrelevantes": self._paso_irrelevantes,
             "renombrar": self._paso_renombrar,
@@ -687,21 +743,123 @@ class AgenteEDA:
             "relaciones": self._paso_relaciones,
             "objetivo": self._paso_objetivo,
         }
-        numero = 1
-        for item in self.plan:
-            if item["clave"] == "faltantes":
-                self._preparar_datos_para_modelos()
-            if not item["ejecutar"]:
-                self._registrar("omisión", item["paso"], item["razon"], "Paso omitido.")
+
+    # ------------------------------------------------------------------
+    # Bucle agéntico: el LLM decide qué herramienta usar y en qué orden
+    # ------------------------------------------------------------------
+    def _resultado_paso(self, paso: Paso) -> dict[str, Any]:
+        return {
+            "titulo": paso.titulo, "severidad": paso.severidad,
+            "observacion": llm.recortar(paso.observacion), "razonamiento": llm.recortar(paso.razonamiento),
+            "accion": llm.recortar(paso.accion), "interpretacion": llm.recortar(paso.interpretacion),
+            "recomendaciones": llm.recortar(paso.recomendaciones),
+        }
+
+    def _factible(self, clave: str) -> str | None:
+        """Motivo por el que un paso es imposible con estos datos (None si se puede ejecutar)."""
+        p = self.percepcion
+        if clave == "objetivo" and self.objetivo is None:
+            return "No se indicó variable objetivo."
+        if clave == "relaciones" and len(p["numericas"]) < 2:
+            return "Se requieren al menos dos variables numéricas."
+        if clave == "atipicos" and not p["numericas"]:
+            return "No hay variables numéricas."
+        return None
+
+    def _ejecutar_con_llm(self) -> AgenteEDA:
+        cliente = self.cliente or llm.crear_cliente()
+        self.percibir()
+        self.planificar()  # plan por reglas: se entrega al LLM solo como sugerencia
+        acciones = self._acciones()
+        titulos = {item["clave"]: item["paso"] for item in self.plan}
+        sugerido = {item["clave"]: item for item in self.plan}
+        decisiones: dict[str, tuple[bool, str]] = {}
+        self.pasos, self.bitacora = [], self.bitacora[:2]  # conserva percepción y planificación
+        self.analisis_llm = ""
+
+        perfil = {k: v for k, v in self.percepcion.items()}
+        mensajes: list[dict[str, Any]] = [
+            {"role": "system", "content": llm.SISTEMA},
+            {"role": "user", "content": json.dumps({
+                "perfil_de_datos": perfil,
+                "plan_sugerido_por_reglas": [
+                    {"clave": c, "paso": titulos[c], "sugerido": s["ejecutar"], "razon": s["razon"]}
+                    for c, s in sugerido.items()],
+            }, ensure_ascii=False, default=str)},
+        ]
+        herramientas = llm.herramientas(list(acciones))
+
+        for _ in range(self.max_iteraciones):
+            respuesta = llm.completar(
+                cliente, model=self.modelo, messages=mensajes, tools=herramientas, tool_choice="auto",
+                temperature=0)
+            msg = respuesta.choices[0].message
+            llamadas = msg.tool_calls or []
+            mensajes.append({
+                "role": "assistant", "content": msg.content,
+                **({"tool_calls": [self._llamada_como_dict(c) for c in llamadas]} if llamadas else {})})
+            if not llamadas:
+                mensajes.append({"role": "user", "content": "Continúa usando las herramientas hasta finalizar."})
                 continue
-            paso = acciones[item["clave"]](numero)
-            self.pasos.append(paso)
-            self._registrar(paso.titulo, paso.observacion, paso.razonamiento, paso.accion)
-            numero += 1
+
+            terminado = False
+            for llamada in llamadas:
+                try:
+                    args = json.loads(llamada.function.arguments or "{}")
+                except json.JSONDecodeError:
+                    args = {}
+                resultado = self._despachar(llamada.function.name, args, acciones, decisiones, titulos)
+                if llamada.function.name == "finalizar" and "error" not in resultado:
+                    terminado = True
+                mensajes.append({"role": "tool", "tool_call_id": llamada.id,
+                                 "content": json.dumps(resultado, ensure_ascii=False, default=str)})
+            if terminado:
+                break
+        else:
+            raise RuntimeError("El LLM no finalizó en el máximo de iteraciones.")
+
+        self.plan = [
+            {"clave": c, "paso": titulos[c], "ejecutar": decisiones[c][0], "razon": decisiones[c][1]}
+            for c in acciones
+        ]
         if self._datos_para_modelos is None:
             self._preparar_datos_para_modelos()
         self._sintetizar()
         return self
+
+    def _despachar(self, nombre: str, args: dict[str, Any], acciones: dict[str, Any],
+                   decisiones: dict[str, tuple[bool, str]], titulos: dict[str, str]) -> dict[str, Any]:
+        """Ejecuta una herramienta pedida por el LLM validando sus argumentos."""
+        if nombre == "finalizar":
+            pendientes = [c for c in acciones if c not in decisiones]
+            if pendientes:
+                return {"error": f"Faltan pasos por decidir: {pendientes}"}
+            self.analisis_llm = str(args.get("analisis", "")).strip()
+            return {"ok": True}
+        if nombre not in ("ejecutar_paso", "omitir_paso"):
+            return {"error": f"Herramienta desconocida: {nombre}"}
+        clave, motivo = args.get("clave"), str(args.get("justificacion", "")).strip()
+        if clave not in acciones:
+            return {"error": f"Clave inválida. Opciones: {list(acciones)}"}
+        if clave in decisiones:
+            return {"error": f"El paso '{clave}' ya fue decidido."}
+        if nombre == "omitir_paso":
+            decisiones[clave] = (False, motivo or "Omitido por decisión del agente.")
+            self._registrar("omisión (LLM)", titulos[clave], decisiones[clave][1], "Paso omitido.")
+            return {"ok": True, "omitido": clave}
+        imposible = self._factible(clave)
+        if imposible:
+            return {"error": f"No se puede ejecutar '{clave}': {imposible} Omítelo."}
+        if clave == "faltantes":
+            self._preparar_datos_para_modelos()
+        try:
+            paso = acciones[clave](len(self.pasos) + 1)
+        except Exception as exc:
+            return {"error": f"El paso '{clave}' falló: {type(exc).__name__}: {exc}"}
+        decisiones[clave] = (True, motivo or "Ejecutado por decisión del agente.")
+        self.pasos.append(paso)
+        self._registrar(f"{paso.titulo} (LLM: {motivo})", paso.observacion, paso.razonamiento, paso.accion)
+        return self._resultado_paso(paso)
 
     def _sintetizar(self) -> None:
         orden = {"alta": 0, "media": 1, "informativa": 2}
@@ -717,8 +875,11 @@ class AgenteEDA:
                 f"Tras la limpieza sugerida quedan {limpio[0]} filas y {limpio[1]} columnas."
             ),
             "recomendaciones": prioritarias or ["Los datos están en buen estado para modelar."],
-            "advertencia": "Las interpretaciones son automáticas y basadas en reglas estadísticas: deben validarse "
-                           "con conocimiento del dominio. Correlación no implica causalidad.",
+            "advertencia": (f"Las interpretaciones son automáticas (estadística y análisis del LLM {self.modelo})"
+                            if self.modo == "llm" else "Las interpretaciones son automáticas (reglas estadísticas)")
+                           + ": deben validarse con conocimiento del dominio. Correlación no implica causalidad.",
+            "conclusion": self._concluir(),
+            "analisis_llm": self.analisis_llm,
         }
         self._registrar(
             "autoevaluación",
@@ -726,6 +887,56 @@ class AgenteEDA:
             "Las conclusiones deben ser verificables y declarar su incertidumbre.",
             "Generar la síntesis final.",
         )
+
+    def _concluir(self) -> list[str]:
+        """Conclusión final en lenguaje natural sobre lo que el agente hizo y encontró."""
+        original, limpio = self.original.shape, self.datos_limpios.shape
+        ejecutados = [p.titulo for p in self.pasos]
+        omitidos = [item["paso"] for item in self.plan if not item["ejecutar"]]
+        parrafos = [
+            f"El agente analizó {original[0]} filas y {original[1]} columnas y ejecutó {len(ejecutados)} de "
+            f"{len(self.plan)} pasos del plan: {', '.join(ejecutados)}."
+            + (f" Omitió {len(omitidos)} pasos porque los datos no los requerían ({', '.join(omitidos)})."
+               if omitidos else "")
+        ]
+
+        cambios = []
+        if original[0] != limpio[0]:
+            cambios.append(f"eliminó {original[0] - limpio[0]} filas")
+        if original[1] != limpio[1]:
+            cambios.append(f"eliminó {original[1] - limpio[1]} columnas irrelevantes")
+        if self.percepcion.get("ceros_sospechosos"):
+            cambios.append(f"trató como faltantes los ceros de {list(self.percepcion['ceros_sospechosos'])}")
+        if self.imputadas:
+            cambios.append(f"imputó valores faltantes en {len(self.imputadas)} columnas")
+        parrafos.append(
+            ("Sobre una copia de trabajo " + ", ".join(cambios) + "." if cambios
+             else "No fue necesario aplicar cambios de limpieza.")
+            + " Los datos originales no se modificaron."
+        )
+
+        altas = [p.titulo for p in self.pasos if p.severidad == "alta"]
+        medias = [p.titulo for p in self.pasos if p.severidad == "media"]
+        if altas or medias:
+            parrafos.append(
+                "Los hallazgos que requieren atención están en: "
+                + ", ".join(f"{t} (alta)" for t in altas) + (", " if altas and medias else "")
+                + ", ".join(f"{t} (media)" for t in medias) + "."
+            )
+        else:
+            parrafos.append("No se encontraron problemas relevantes en ninguno de los pasos.")
+
+        paso_objetivo = next((p for p in self.pasos if p.titulo.startswith("Variable objetivo")), None)
+        if paso_objetivo:
+            parrafos.append(f"{paso_objetivo.observacion} {paso_objetivo.interpretacion}")
+
+        if altas:
+            parrafos.append("Conclusión: antes de modelar conviene resolver primero las recomendaciones de prioridad alta.")
+        elif medias:
+            parrafos.append("Conclusión: los datos son utilizables para modelar, teniendo en cuenta las recomendaciones de prioridad media.")
+        else:
+            parrafos.append("Conclusión: los datos están en buen estado para pasar al modelado.")
+        return parrafos
 
     # ==================================================================
     # Informe HTML (autocontenido: los gráficos van incrustados)
@@ -771,6 +982,11 @@ class AgenteEDA:
         partes.append("<h2>Síntesis y recomendaciones prioritarias</h2><ul>")
         partes.extend(f"<li>{e(r)}</li>" for r in self.sintesis["recomendaciones"])
         partes.append(f"</ul><p><i>{e(self.sintesis['advertencia'])}</i></p>")
+        partes.append("<h2>Conclusión del agente</h2>")
+        partes.extend(f"<p>{e(p)}</p>" for p in self.sintesis["conclusion"])
+        if self.sintesis.get("analisis_llm"):
+            partes.append(f"<h2>Análisis del LLM ({e(self.modelo)})</h2>")
+            partes.extend(f"<p>{e(p)}</p>" for p in self.sintesis["analisis_llm"].split("\n") if p.strip())
         partes.append("<h2>Bitácora de razonamiento</h2><table><tr><th>Etapa</th><th>Observación</th>"
                       "<th>Razonamiento</th><th>Acción</th></tr>")
         for fila in self.bitacora:

@@ -9,4 +9,5 @@ umap-learn>=0.5
 ipykernel>=6.0
 streamlit
 plotly>=5.18
+openai>=1.0
 pytest

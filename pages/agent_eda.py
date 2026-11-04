@@ -28,12 +28,12 @@ ejecutar = c2.button("Ejecutar agente", type="primary", width="stretch")
 
 if ejecutar:
     with st.spinner("El agente está analizando los datos..."):
-        agente = AgenteEDA(df, objetivo=None if objetivo == "(ninguna)" else objetivo).ejecutar()
+        agente_nuevo = AgenteEDA(df, objetivo=None if objetivo == "(ninguna)" else objetivo).ejecutar()
         modelo_eda = DataModel()
-        modelo_eda.cargar_dataframe(agente.datos_para_modelos)
+        modelo_eda.cargar_dataframe(agente_nuevo.datos_para_modelos)
         limpiar_resultados()
-        st.session_state["agente_eda"] = agente
-        st.session_state["agente_eda_html"] = agente.informe_html()
+        st.session_state["agente_eda"] = agente_nuevo
+        st.session_state["agente_eda_html"] = agente_nuevo.informe_html()
         st.session_state["modelo_eda"] = modelo_eda
         st.session_state["eda_archivo_hash"] = st.session_state.get("archivo_hash")
         st.session_state["eda_objetivo"] = None if objetivo == "(ninguna)" else objetivo
@@ -57,6 +57,10 @@ if (
 # Síntesis
 # ---------------------------------------------------------------------------
 st.subheader("Síntesis del agente")
+if agente.modo == "llm":
+    st.success(f"Análisis dirigido por el LLM ({agente.modelo}).")
+else:
+    st.warning(f"No se pudo usar el LLM; se usó el análisis por reglas. Motivo: {agente.motivo_respaldo}")
 st.write(agente.sintesis["resumen"])
 for recomendacion in agente.sintesis["recomendaciones"]:
     if recomendacion.startswith("[ALTA]"):
@@ -95,6 +99,13 @@ for paso in agente.pasos:
         st.markdown("**Recomendaciones:**")
         for recomendacion in paso.recomendaciones:
             st.markdown(f"- {recomendacion}")
+
+# ---------------------------------------------------------------------------
+# Conclusión
+# ---------------------------------------------------------------------------
+st.subheader("Conclusión del agente")
+for parrafo in agente.sintesis.get("conclusion", []):
+    st.write(parrafo)
 
 # ---------------------------------------------------------------------------
 # Bitácora y descargas

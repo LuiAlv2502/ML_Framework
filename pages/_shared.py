@@ -89,14 +89,14 @@ def obtener_modelo(requiere_eda=True, requiere_objetivo=False):
     )
     if not eda_vigente:
         st.warning("Antes de continuar, ejecuta el EDA para preparar este archivo.")
-        st.page_link("pages/agent_eda.py", label="Ir al agente EDA", icon=":material/smart_toy:")
+        st.page_link("pages/eda.py", label="Ir al EDA", icon=":material/smart_toy:")
         return None
 
     if requiere_objetivo and not st.session_state.get("eda_objetivo"):
         st.warning(
             "Para usar clasificación o regresión, vuelve al EDA y selecciona la variable objetivo."
         )
-        st.page_link("pages/agent_eda.py", label="Ir al agente EDA", icon=":material/smart_toy:")
+        st.page_link("pages/eda.py", label="Ir al EDA", icon=":material/smart_toy:")
         return None
 
     return modelo_eda

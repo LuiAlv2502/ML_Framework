@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import sys
 
 import numpy as np
@@ -12,9 +13,92 @@ from agents import AgenteEDA
 
 
 def _ejecutar(df, objetivo=None):
-    agente = AgenteEDA(df, objetivo=objetivo).ejecutar()
+    agente = AgenteEDA(df, objetivo=objetivo, cliente=_ClienteQueSigueElPlan()).ejecutar()
     agente.cerrar_figuras()
     return agente
+
+
+def _respuesta(nombre, args):
+    from types import SimpleNamespace as NS
+    llamada = NS(id="c", function=NS(name=nombre, arguments=json.dumps(args)))
+    return NS(choices=[NS(message=NS(content=None, tool_calls=[llamada]))])
+
+
+class _ClienteFalso:
+    """Cliente que imita chat.completions.create con un guion de llamadas a herramientas."""
+
+    def __init__(self, guion):
+        self.guion = list(guion)
+        self.chat = self
+        self.completions = self
+
+    def create(self, **kwargs):
+        return _respuesta(*self.guion.pop(0))
+
+
+class _ClienteQueSigueElPlan(_ClienteFalso):
+    """Imita a un LLM que acepta el plan sugerido en el primer mensaje."""
+
+    def __init__(self):
+        super().__init__([])
+
+    def create(self, messages, **kwargs):
+        if not self.guion:
+            plan = json.loads(messages[1]["content"])["plan_sugerido_por_reglas"]
+            self.guion = [
+                ("ejecutar_paso" if p["sugerido"] else "omitir_paso", {"clave": p["clave"], "justificacion": p["razon"]})
+                for p in plan
+            ] + [("finalizar", {"analisis": "ok"})]
+        return super().create()
+
+
+def _guion_completo(omitir_duplicados=True):
+    claves = ["estructura", "irrelevantes", "renombrar", "duplicados", "faltantes",
+              "atipicos", "distribuciones", "relaciones", "objetivo"]
+    guion = []
+    for c in claves:
+        if c == "renombrar" or (c == "duplicados" and omitir_duplicados):
+            guion.append(("omitir_paso", {"clave": c, "justificacion": "no aplica"}))
+        else:
+            guion.append(("ejecutar_paso", {"clave": c, "justificacion": "relevante"}))
+    guion.append(("finalizar", {"analisis": "Datos listos con cautela."}))
+    return guion
+
+
+def test_agente_llm_ejecuta_el_plan_que_decide_el_modelo():
+    df = pd.read_csv(ROOT / "data" / "diabetes.csv")
+    agente = AgenteEDA(df, objetivo="Outcome", cliente=_ClienteFalso(_guion_completo())).ejecutar()
+    agente.cerrar_figuras()
+
+    assert agente.sintesis["analisis_llm"] == "Datos listos con cautela."
+    assert len(agente.pasos) == 7
+    assert {i["clave"]: i["ejecutar"] for i in agente.plan}["duplicados"] is False
+
+
+def test_agente_cae_a_reglas_si_el_llm_no_termina():
+    df = pd.read_csv(ROOT / "data" / "diabetes.csv")
+    cliente = _ClienteFalso([("finalizar", {"analisis": "x"})])
+
+    agente = AgenteEDA(df, objetivo="Outcome", cliente=cliente, max_iteraciones=1).ejecutar()
+    agente.cerrar_figuras()
+
+    assert agente.modo == "reglas"
+    assert agente.motivo_respaldo
+    assert len(agente.pasos) > 0
+    assert agente.sintesis["analisis_llm"] == ""
+
+
+def test_agente_sin_api_key_usa_reglas_y_explica_el_motivo(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    df = pd.read_csv(ROOT / "data" / "diabetes.csv")
+
+    agente = AgenteEDA(df).ejecutar()
+    agente.cerrar_figuras()
+
+    assert agente.modo == "reglas"
+    assert "GEMINI_API_KEY" in agente.motivo_respaldo or "openai" in agente.motivo_respaldo
+    assert len(agente.pasos) > 0
 
 
 def test_agente_no_modifica_los_datos_originales():
@@ -104,7 +188,7 @@ def test_agente_identifica_tipo_de_problema():
 @pytest.mark.parametrize("archivo", ["drug200.csv", "Mall_Customers.csv", "water_potability.csv"])
 def test_agente_genera_informe_html(archivo, tmp_path):
     df = pd.read_csv(ROOT / "data" / archivo)
-    agente = AgenteEDA(df).ejecutar()
+    agente = AgenteEDA(df, cliente=_ClienteQueSigueElPlan()).ejecutar()
 
     ruta = agente.guardar_informe(tmp_path / "informe.html")
     contenido = Path(ruta).read_text(encoding="utf-8")

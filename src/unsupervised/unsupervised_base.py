@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
-from EDA.dataframe import DataFrame
+from Eda.dataframe import DataFrame
 
 class UnsupervisedBase(DataFrame):
     def preparar_datos_numericos(self, columnas=None):

@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from agents import AgenteEDA
+from model import DataModel
 from pages._shared import limpiar_resultados, obtener_modelo
 from pages._theme import (
     AMARILLO,
@@ -19,9 +21,60 @@ from pages._theme import (
 
 st.title("Exploración de datos (EDA)")
 
-model = obtener_modelo()
-if model is None:
+modelo_base = obtener_modelo(requiere_eda=False)
+if modelo_base is None:
     st.stop()
+
+# ---------------------------------------------------------------------------
+# Agente inteligente
+# ---------------------------------------------------------------------------
+with st.container(border=True):
+    st.markdown("**Agente inteligente de EDA**")
+    st.caption(
+        "El agente ejecuta automáticamente todas las operaciones del EDA y prepara una copia "
+        "de los datos para los modelos. El CSV original se conserva. Si usarás clasificación o "
+        "regresión, selecciona la variable objetivo."
+    )
+    a1, a2 = st.columns([2, 1])
+    columnas_base = modelo_base.dataframe.dataframe.columns.tolist()
+    objetivo_previo = st.session_state.get("eda_objetivo")
+    objetivo = a1.selectbox(
+        "Variable objetivo (opcional)",
+        ["(ninguna)", *columnas_base],
+        index=columnas_base.index(objetivo_previo) + 1 if objetivo_previo in columnas_base else 0,
+        help="Si se indica, el agente analiza si el problema es de clasificación o regresión.",
+    )
+    objetivo_actual = None if objetivo == "(ninguna)" else objetivo
+    a2.write("")
+    if a2.button("Ejecutar agente", type="primary", width="stretch"):
+        with st.spinner("El agente está analizando los datos..."):
+            agente_nuevo = AgenteEDA(modelo_base.dataframe.dataframe, objetivo=objetivo_actual).ejecutar()
+            modelo_eda = DataModel()
+            modelo_eda.cargar_dataframe(agente_nuevo.datos_para_modelos)
+            limpiar_resultados()
+            st.session_state["agente_eda"] = agente_nuevo
+            st.session_state["agente_eda_html"] = agente_nuevo.informe_html()
+            st.session_state["modelo_eda"] = modelo_eda
+            st.session_state["eda_archivo_hash"] = st.session_state.get("archivo_hash")
+            st.session_state["eda_objetivo"] = objetivo_actual
+
+agente = st.session_state.get("agente_eda")
+if agente is not None and st.session_state.get("eda_objetivo") != objetivo_actual:
+    st.session_state.pop("modelo_eda", None)
+    st.session_state.pop("eda_archivo_hash", None)
+    st.warning("La variable objetivo cambió. Vuelve a ejecutar el agente antes de usar los modelos.")
+
+modelo_eda = st.session_state.get("modelo_eda")
+eda_vigente = (
+    modelo_eda is not None
+    and st.session_state.get("eda_archivo_hash") == st.session_state.get("archivo_hash")
+)
+model = modelo_eda if eda_vigente else modelo_base
+st.caption(
+    "Las pestañas de exploración muestran los **datos preparados por el agente**."
+    if eda_vigente
+    else "Las pestañas de exploración muestran los **datos originales** (el agente aún no se ha ejecutado)."
+)
 
 df = model.dataframe.dataframe
 numericas = df.select_dtypes(include=np.number).columns.tolist()
@@ -40,8 +93,9 @@ def _aplicar(operacion, mensaje):
     st.rerun()
 
 
-tab_resumen, tab_calidad, tab_dist, tab_rel, tab_limpieza = st.tabs(
+tab_agente, tab_resumen, tab_calidad, tab_dist, tab_rel, tab_limpieza = st.tabs(
     [
+        "Informe del agente",
         "Resumen",
         "Calidad de datos",
         "Distribuciones",
@@ -49,6 +103,68 @@ tab_resumen, tab_calidad, tab_dist, tab_rel, tab_limpieza = st.tabs(
         "Limpieza y transformación",
     ]
 )
+
+# ---------------------------------------------------------------------------
+# Informe del agente
+# ---------------------------------------------------------------------------
+with tab_agente:
+    if agente is None:
+        st.info("Presione **Ejecutar agente** para que realice el EDA automáticamente.")
+    else:
+        st.subheader("Síntesis del agente")
+        if agente.modo != "llm":
+            st.warning(f"No se pudo usar el LLM; se usó el análisis por reglas. Motivo: {agente.motivo_respaldo}")
+        st.write(agente.sintesis["resumen"])
+        for recomendacion in agente.sintesis["recomendaciones"]:
+            if recomendacion.startswith("[ALTA]"):
+                st.error(recomendacion)
+            elif recomendacion.startswith("[MEDIA]"):
+                st.warning(recomendacion)
+            else:
+                st.success(recomendacion)
+        st.caption(agente.sintesis["advertencia"])
+
+        with st.expander("Plan del agente (qué decidió hacer y por qué)", expanded=True):
+            for item in agente.plan:
+                icono = "✅" if item["ejecutar"] else "⏭️"
+                st.markdown(f"{icono} **{item['paso']}** — {item['razon']}")
+
+        st.subheader("Pasos del EDA")
+        iconos = {"alta": "🔴", "media": "🟡", "informativa": "🟢"}
+        for paso in agente.pasos:
+            with st.expander(f"{iconos[paso.severidad]} Paso {paso.numero}. {paso.titulo}"):
+                st.markdown(f"**Observación:** {paso.observacion}")
+                st.markdown(f"**Razonamiento:** {paso.razonamiento}")
+                st.markdown(f"**Acción:** {paso.accion}")
+                for nombre, tabla in paso.tablas.items():
+                    st.markdown(f"*{nombre}*")
+                    st.dataframe(tabla, width="stretch")
+                for titulo, figura in paso.figuras:
+                    st.markdown(f"*{titulo}*")
+                    st.pyplot(figura, clear_figure=False)
+                st.markdown(f"**Interpretación:** {paso.interpretacion}")
+                st.markdown("**Recomendaciones:**")
+                for recomendacion in paso.recomendaciones:
+                    st.markdown(f"- {recomendacion}")
+
+        with st.expander("Bitácora de razonamiento"):
+            st.dataframe(agente.bitacora, width="stretch")
+
+        d1, d2 = st.columns(2)
+        d1.download_button(
+            "Descargar informe (HTML)",
+            data=st.session_state["agente_eda_html"].encode("utf-8"),
+            file_name="informe_agente_eda.html",
+            mime="text/html",
+            width="stretch",
+        )
+        d2.download_button(
+            "Descargar datos preparados para modelos (CSV)",
+            data=agente.datos_para_modelos.to_csv(index=False).encode("utf-8"),
+            file_name="datos_preparados_agente.csv",
+            mime="text/csv",
+            width="stretch",
+        )
 
 # ---------------------------------------------------------------------------
 # Resumen
@@ -255,16 +371,15 @@ with tab_rel:
     else:
         st.subheader("Mapa de calor de correlaciones")
         corr = model.correlacion()
-        mascara = np.triu(np.ones_like(corr, dtype=bool), k=1)
         fig_corr = go.Figure(
             go.Heatmap(
-                z=corr.mask(mascara).to_numpy(),
+                z=corr.to_numpy(),
                 x=corr.columns,
                 y=corr.index,
                 zmin=-1,
                 zmax=1,
                 colorscale=ESCALA_DIVERGENTE,
-                text=corr.mask(mascara).round(2).to_numpy(),
+                text=corr.round(2).to_numpy(),
                 texttemplate="%{text}",
                 hovertemplate="%{y} · %{x}<br>r = %{z:.3f}<extra></extra>",
                 xgap=2,
