@@ -9,7 +9,7 @@ import pandas as pd
 from supervised import RegresionModelos
 from supervised.Regression.Regression import NOMBRES as NOMBRES_REGRESION
 
-from .supervisado_agent import ARBOLES, DIVISION, PROFUNDIDAD, AgenteSupervisado
+from .supervised_agent import ARBOLES, DIVISION, PROFUNDIDAD, AgenteSupervisado
 
 MIN_UNICOS_REGRESION = 10
 

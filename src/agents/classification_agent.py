@@ -8,7 +8,7 @@ import pandas as pd
 
 from supervised import ClasificacionModelos
 
-from .supervisado_agent import ARBOLES, DIVISION, MAX_CLASES, PROFUNDIDAD, AgenteSupervisado
+from .supervised_agent import ARBOLES, DIVISION, MAX_CLASES, PROFUNDIDAD, AgenteSupervisado
 
 
 class AgenteClasificacion(AgenteSupervisado):

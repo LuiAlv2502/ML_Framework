@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from pages._agente_supervisado import seccion_agente
+from pages._supervised_agent import seccion_agente
 from pages._shared import obtener_modelo
 from pages._theme import (
     AMARILLO,

@@ -1,9 +1,9 @@
-from .clasificacion_agent import AgenteClasificacion
+from .classification_agent import AgenteClasificacion
 from .eda_agent import AgenteEDA, Paso
 from .llm import ErrorLLM
-from .no_supervisado_agent import AgenteNoSupervisado
-from .regresion_agent import AgenteRegresion
-from .supervisado_agent import AgenteSupervisado
+from .unsupervised_agent import AgenteNoSupervisado
+from .regression_agent import AgenteRegresion
+from .supervised_agent import AgenteSupervisado
 
 __all__ = [
     "AgenteClasificacion",

@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from pages._agente_supervisado import seccion_agente
+from pages._supervised_agent import seccion_agente
 from pages._shared import obtener_modelo
 from pages._theme import AMARILLO, CIAN, MAGENTA, ROJO as ROJO_NEON, VERDE as VERDE_NEON, brillo, grafico
 from supervised import ClasificacionModelos
