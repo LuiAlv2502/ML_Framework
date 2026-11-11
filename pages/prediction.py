@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from pages._agente_supervisado import seccion_agente
 from pages._shared import obtener_modelo
 from pages._theme import (
     AMARILLO,
@@ -339,6 +340,8 @@ numericas = df.select_dtypes(include=np.number).columns.tolist()
 if not numericas or len(columnas) < 2:
     st.warning("El archivo debe tener una variable objetivo numérica y al menos un predictor.")
     st.stop()
+
+seccion_agente("regresion", df)
 
 # ---------------------------------------------------------------------------
 # PASO 1: Generar datos

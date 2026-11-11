@@ -59,6 +59,20 @@ En la página **No supervisado** se ofrecen:
 
 En **Supervisado - Clasificación** se ofrecen KNN, árbol de decisión, Random Forest, Gradient Boosting, AdaBoost y XGBoost. Se presentan *accuracy*, precisión macro, *recall* macro, F1 macro, matriz de confusión e informe por clase.
 
+En **Supervisado - Clasificación** y **Supervisado - Predicción** también está el **agente inteligente supervisado** (opcional). La variable objetivo la elige el usuario o, si no la indica, el LLM. El agente excluye identificadores y valida algoritmos de al menos tres familias distintas (lineal, kernel, vecinos, árbol, *bagging*, *boosting*) en varias particiones *hold-out*. Muestra un ranking con media ± desviación de F1 macro (clasificación) o RMSE (regresión). Al terminar se autoevalúa: compara el mejor modelo con una línea base (clase mayoritaria o predecir la media) y revisa la estabilidad entre particiones. El informe puede descargarse en HTML.
+
+### Arquitectura de los agentes (`src/agents`)
+
+Los agentes (`AgenteEDA`, `AgenteNoSupervisado`, `AgenteClasificacion` y `AgenteRegresion`) siguen el mismo ciclo y la misma interfaz. `AgenteClasificacion` y `AgenteRegresion` heredan de la base común `AgenteSupervisado` y solo definen sus algoritmos, su métrica principal, qué columna es válida como objetivo y su línea base:
+
+1. **Percibir** (`percibir`): perfil agregado de los datos; al LLM nunca se le envían filas.
+2. **Planificar** (`planificar`): plan sugerido por reglas con los pasos o algoritmos factibles y su razón.
+3. **Actuar** (`_ejecutar_con_llm`): el LLM elige herramientas mediante *tool calling*; Python valida cada argumento (`_despachar`) y ejecuta los algoritmos del framework. El bucle común está en `llm.bucle_herramientas`.
+4. **Autoevaluar**: el agente revisa la calidad de sus resultados (síntesis del EDA, silhouette y varianza explicada, línea base y estabilidad en supervisado).
+5. **Informar**: `bitacora` (observación, razonamiento, acción), `informe_html()` / `guardar_informe()` y `uso_llm` (turnos, llamadas y tokens).
+
+Si el LLM no está disponible, falla o no finaliza dentro de `max_iteraciones`, el agente pasa al **respaldo por reglas** (`modo == "reglas"`) y deja el motivo en `motivo_respaldo`.
+
 > La interfaz Streamlit no expone todos los métodos de manipulación y análisis del modelo MVC descritos más abajo. Esas operaciones siguen disponibles a través de la API Python de `DataModel`; las páginas de la aplicación muestran el subconjunto implementado en cada flujo.
 
 ### Pruebas

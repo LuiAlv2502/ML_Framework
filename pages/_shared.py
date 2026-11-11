@@ -17,6 +17,8 @@ CLAVES_RESULTADOS = (
     "reg_exp_seleccionado",
     "agente_no_supervisado",
     "no_supervisado_archivo_hash",
+    "agente_clasificacion",
+    "agente_regresion",
 )
 
 

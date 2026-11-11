@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from agents import AgenteNoSupervisado
+from agents import AgenteNoSupervisado, llm
 from pages._shared import obtener_modelo
 from pages._theme import (
     AMARILLO,
@@ -32,8 +32,28 @@ if st.session_state.get("no_supervisado_archivo_hash") != archivo_hash:
     st.session_state.pop("agente_no_supervisado", None)
     st.session_state["no_supervisado_archivo_hash"] = archivo_hash
 
-tab_reduccion, tab_cluster, tab_agente = st.tabs(
-    ["Reducción dimensional", "Clustering", "Agente inteligente"]
+# ---------------------------------------------------------------------------
+# Agente inteligente
+# ---------------------------------------------------------------------------
+with st.container(border=True):
+    st.markdown("**Agente inteligente no supervisado**")
+    st.caption(
+        "El análisis manual está disponible aunque no ejecutes el agente. El agente selecciona "
+        "análisis permitidos; PCA y los algoritmos de clustering se ejecutan en Python. "
+        "Gemini recibe métricas agregadas, no las filas del CSV."
+    )
+    if st.button("Ejecutar agente", type="primary", key="btn_agente_no_supervisado"):
+        with st.spinner("El agente está analizando los datos..."):
+            try:
+                agente_nuevo = AgenteNoSupervisado(df_original).ejecutar()
+            except Exception as error:
+                st.error(f"No se pudo ejecutar el agente: {type(error).__name__}: {error}")
+            else:
+                st.session_state["agente_no_supervisado"] = agente_nuevo
+                st.session_state["no_supervisado_archivo_hash"] = archivo_hash
+
+tab_agente, tab_reduccion, tab_cluster = st.tabs(
+    ["Informe del agente", "Reducción dimensional", "Clustering"]
 )
 
 
@@ -200,20 +220,6 @@ with tab_reduccion:
                 st.error(f"Error: {error}")
 
 with tab_agente:
-    st.caption(
-        "El agente selecciona análisis permitidos; PCA y los algoritmos de clustering se ejecutan "
-        "en Python. Gemini recibe métricas agregadas, no las filas del CSV."
-    )
-    if st.button("Ejecutar agente no supervisado", type="primary"):
-        with st.spinner("El agente está analizando los datos..."):
-            try:
-                agente_nuevo = AgenteNoSupervisado(df_original).ejecutar()
-            except Exception as error:
-                st.error(f"No se pudo ejecutar el agente: {type(error).__name__}: {error}")
-            else:
-                st.session_state["agente_no_supervisado"] = agente_nuevo
-                st.session_state["no_supervisado_archivo_hash"] = archivo_hash
-
     agente = st.session_state.get("agente_no_supervisado")
     if agente is not None:
         if agente.modo == "llm":
@@ -232,6 +238,12 @@ with tab_agente:
         if agente.analisis_llm:
             st.subheader("Interpretación del LLM")
             st.write(agente.analisis_llm)
+
+        if agente.autoevaluacion:
+            st.subheader("Autoevaluación del agente")
+            st.info("\n".join(f"- {texto}" for texto in agente.autoevaluacion))
+        if agente.uso_llm:
+            st.caption(f"Uso del LLM: {llm.resumen_uso(agente.uso_llm)}")
 
         if "pca" in agente.resultados:
             resultado_pca = agente.resultados["pca"]
@@ -321,7 +333,7 @@ with tab_agente:
             width="stretch",
         )
     else:
-        st.info("Pulsa **Ejecutar agente no supervisado** para iniciar el análisis.")
+        st.info("Presione **Ejecutar agente** para que realice el análisis no supervisado automáticamente.")
 
 with tab_cluster:
     c1, c2, c3 = st.columns(3)

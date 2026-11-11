@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from agents import AgenteEDA
+from agents import AgenteEDA, llm
 from model import DataModel
 from pages._shared import (
     limpiar_resultados,
@@ -125,6 +125,8 @@ with tab_agente:
         st.subheader("Síntesis del agente")
         if agente.modo != "llm":
             st.warning(f"No se pudo usar el LLM; se usó el análisis por reglas. Motivo: {agente.motivo_respaldo}")
+        elif agente.uso_llm:
+            st.caption(f"Uso del LLM: {llm.resumen_uso(agente.uso_llm)}")
         st.write(agente.sintesis["resumen"])
         for recomendacion in agente.sintesis["recomendaciones"]:
             if recomendacion.startswith("[ALTA]"):

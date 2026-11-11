@@ -37,6 +37,11 @@ class AgenteNoSupervisado:
         self.modelo = modelo
         self.cliente = cliente
         self.max_iteraciones = max_iteraciones
+        self._clustering = ClusteringAnalysis(self.original)
+        self._pca = PCAAnalysis(self.original)
+        self._reiniciar()
+
+    def _reiniciar(self) -> None:
         self.modo = "llm"
         self.motivo_respaldo = ""
         self.percepcion: dict[str, Any] = {}
@@ -44,9 +49,9 @@ class AgenteNoSupervisado:
         self.resultados: dict[str, dict[str, Any]] = {}
         self.bitacora: list[dict[str, str]] = []
         self.analisis_llm = ""
+        self.autoevaluacion: list[str] = []
+        self.uso_llm: dict[str, int] = {}
         self._decisiones: dict[str, tuple[bool, str]] = {}
-        self._clustering = ClusteringAnalysis(self.original)
-        self._pca = PCAAnalysis(self.original)
 
     def _registrar(self, etapa: str, observacion: str, razonamiento: str, accion: str) -> None:
         self.bitacora.append(
@@ -282,6 +287,9 @@ class AgenteNoSupervisado:
         sugerido = next(item for item in self.plan if item["clave"] == clave)
         if not sugerido["sugerido"]:
             return {"error": f"No es factible ejecutar '{clave}': {sugerido['razon']}"}
+        codo_factible = next(item for item in self.plan if item["clave"] == "codo")["sugerido"]
+        if clave in ("kmeans", "hac") and codo_factible and "codo" not in decisiones:
+            return {"error": "Decide primero 'codo' (ejecutar u omitir): orienta la elección de n_clusters."}
         try:
             if clave in ("kmeans", "hac"):
                 if "n_clusters" not in args:
@@ -289,8 +297,8 @@ class AgenteNoSupervisado:
                 resultado = self._acciones()[clave](args["n_clusters"])
             else:
                 resultado = self._acciones()[clave]()
-        except (ValueError, TypeError, KeyError) as error:
-            return {"error": f"No se pudo ejecutar '{clave}': {error}"}
+        except Exception as error:
+            return {"error": f"No se pudo ejecutar '{clave}': {type(error).__name__}: {error}"}
         self.resultados[clave] = resultado
         decisiones[clave] = (True, justificacion or "Ejecutado por el agente.")
         self._registrar(
@@ -330,54 +338,14 @@ class AgenteNoSupervisado:
             {"role": "user", "content": json.dumps(perfil, ensure_ascii=False, default=str)},
         ]
         decisiones: dict[str, tuple[bool, str]] = {}
-        herramientas = self._herramientas()
-
-        for _ in range(self.max_iteraciones):
-            respuesta = llm.completar(
-                cliente,
-                model=self.modelo,
-                messages=mensajes,
-                tools=herramientas,
-                tool_choice="auto",
-                temperature=0,
-            )
-            mensaje = respuesta.choices[0].message
-            llamadas = mensaje.tool_calls or []
-            mensajes.append(
-                {
-                    "role": "assistant",
-                    "content": mensaje.content,
-                    **(
-                        {"tool_calls": [self._llamada_como_dict(llamada) for llamada in llamadas]}
-                        if llamadas else {}
-                    ),
-                }
-            )
-            if not llamadas:
-                mensajes.append(
-                    {"role": "user", "content": "Continúa usando herramientas hasta finalizar."}
-                )
-                continue
-            terminado = False
-            for llamada in llamadas:
-                try:
-                    args = json.loads(llamada.function.arguments or "{}")
-                except json.JSONDecodeError:
-                    args = {}
-                salida = self._despachar(llamada.function.name, args, decisiones)
-                if llamada.function.name == "finalizar" and "error" not in salida:
-                    terminado = True
-                mensajes.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": llamada.id,
-                        "content": json.dumps(salida, ensure_ascii=False, default=str),
-                    }
-                )
-            if terminado:
-                break
-        else:
-            raise RuntimeError("El LLM no finalizó dentro del máximo de iteraciones.")
+        self.uso_llm = llm.bucle_herramientas(
+            cliente,
+            self.modelo,
+            mensajes,
+            self._herramientas(),
+            lambda nombre, args: self._despachar(nombre, args, decisiones),
+            self.max_iteraciones,
+        )
 
         self._decisiones = decisiones
         self.plan = [
@@ -388,21 +356,49 @@ class AgenteNoSupervisado:
             }
             for item in self.plan
         ]
+        self._autoevaluar()
 
-    @staticmethod
-    def _llamada_como_dict(llamada: Any) -> dict[str, Any]:
-        if hasattr(llamada, "model_dump"):
-            resultado = llamada.model_dump(exclude_none=True)
-            resultado["type"] = "function"
-            return resultado
-        return {
-            "id": llamada.id,
-            "type": "function",
-            "function": {
-                "name": llamada.function.name,
-                "arguments": llamada.function.arguments,
-            },
-        }
+    def _autoevaluar(self) -> None:
+        """Revisa la calidad de los resultados antes de entregarlos."""
+        hallazgos = []
+        pca = self.resultados.get("pca")
+        if pca:
+            acumulada = pca["varianza_acumulada"]
+            hallazgos.append(
+                f"Los dos primeros componentes conservan el {acumulada:.1%} de la varianza"
+                + ("; la proyección 2D es representativa." if acumulada >= 0.6
+                   else "; la proyección 2D pierde mucha información y debe interpretarse con cautela.")
+            )
+        silhouettes = {}
+        for clave in ("kmeans", "hac"):
+            resultado = self.resultados.get(clave)
+            if not resultado:
+                continue
+            silhouette = resultado["silhouette"]
+            silhouettes[resultado["algoritmo"]] = silhouette
+            calidad = "fuerte" if silhouette >= 0.5 else "moderada" if silhouette >= 0.25 else "débil"
+            hallazgos.append(
+                f"{resultado['algoritmo']} con {resultado['grupos_obtenidos']} grupos: silhouette "
+                f"{silhouette:.3f} (estructura {calidad})."
+            )
+            tamanos = resultado["tamanos"]
+            if min(tamanos.values()) / sum(tamanos.values()) < 0.05:
+                hallazgos.append(
+                    f"{resultado['algoritmo']} tiene un grupo con menos del 5 % de las observaciones: "
+                    "puede tratarse de atípicos más que de un segmento real."
+                )
+        if len(silhouettes) == 2:
+            mejor = max(silhouettes, key=silhouettes.get)
+            hallazgos.append(f"{mejor} obtiene la mejor separación entre los algoritmos de agrupamiento.")
+        if not hallazgos:
+            hallazgos.append("No se ejecutaron análisis: no hay resultados que evaluar.")
+        self.autoevaluacion = hallazgos
+        self._registrar(
+            "autoevaluación",
+            f"{len(self.resultados)} análisis ejecutados.",
+            " ".join(hallazgos),
+            "Verificar la calidad de los resultados antes de concluir.",
+        )
 
     def _ejecutar_reglas(self) -> None:
         self.percibir()
@@ -430,39 +426,31 @@ class AgenteNoSupervisado:
                     "El algoritmo calculó las métricas localmente.",
                     "Guardar resultados del análisis.",
                 )
-            except (ValueError, TypeError, KeyError) as error:
+            except Exception as error:
                 item.update({"ejecutar": False, "razon": f"No se pudo ejecutar: {error}"})
                 self._registrar("error (reglas)", clave, str(error), "Análisis no ejecutado.")
+        self._autoevaluar()
 
     def ejecutar(self) -> AgenteNoSupervisado:
-        self.motivo_respaldo = ""
-        self.percepcion = {}
-        self.plan = []
-        self.resultados = {}
-        self.bitacora = []
-        self.analisis_llm = ""
-        self._decisiones = {}
-        self.modo = "llm"
+        self._reiniciar()
         if self.cliente is None:
             self.motivo_respaldo = llm.motivo_no_disponible() or ""
         if not self.motivo_respaldo:
             try:
                 self._ejecutar_con_llm()
                 return self
-            except Exception as error:
-                self.motivo_respaldo = (
-                    str(error)
-                    if isinstance(error, llm.ErrorLLM)
-                    else f"{type(error).__name__}: {error}"
-                )
+            except Exception as error:  # red, cuota, respuesta inesperada...
+                motivo = llm.describir_motivo(error)
+                self._reiniciar()
+                self.motivo_respaldo = motivo
         self.modo = "reglas"
-        self.percepcion = {}
-        self.plan = []
-        self.resultados = {}
-        self.bitacora = []
-        self.analisis_llm = ""
         self._ejecutar_reglas()
         return self
+
+    def guardar_informe(self, ruta: str = "informe_no_supervisado.html") -> str:
+        with open(ruta, "w", encoding="utf-8") as archivo:
+            archivo.write(self.informe_html())
+        return ruta
 
     def informe_html(self) -> str:
         """Genera un informe HTML autocontenido con el resumen de los análisis."""
@@ -490,6 +478,8 @@ class AgenteNoSupervisado:
             partes.append(
                 f"<p><b>Motivo del respaldo:</b> {escapar(self.motivo_respaldo)}</p>"
             )
+        if self.uso_llm:
+            partes.append(f"<p><b>Uso del LLM:</b> {escapar(llm.resumen_uso(self.uso_llm))}</p>")
 
         if self.percepcion:
             perfil = pd.DataFrame(
@@ -521,6 +511,11 @@ class AgenteNoSupervisado:
                 for parrafo in self.analisis_llm.splitlines()
                 if parrafo.strip()
             )
+
+        if self.autoevaluacion:
+            partes.append("<h2>Autoevaluación del agente</h2><ul>")
+            partes.extend(f"<li>{escapar(texto)}</li>" for texto in self.autoevaluacion)
+            partes.append("</ul>")
 
         resultado_pca = self.resultados.get("pca")
         if resultado_pca:

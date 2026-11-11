@@ -73,6 +73,8 @@ class AgenteEDA:
             raise ValueError("No hay datos para analizar.")
         if objetivo is not None and objetivo not in datos.columns:
             raise KeyError(f"La variable objetivo '{objetivo}' no existe.")
+        if max_iteraciones < 1:
+            raise ValueError("max_iteraciones debe ser mayor que cero.")
 
         self.original = datos.copy()
         self.objetivo = objetivo
@@ -88,6 +90,7 @@ class AgenteEDA:
         # Copia de trabajo: se usa la clase DataFrame del framework.
         self.trabajo = DataFrame(self.original.copy())
         self.analisis_llm = ""
+        self.uso_llm: dict[str, int] = {}
         self.percepcion: dict[str, Any] = {}
         self.plan: list[dict[str, str]] = []
         self.pasos: list[Paso] = []
@@ -698,7 +701,7 @@ class AgenteEDA:
             try:
                 return self._ejecutar_con_llm()
             except Exception as exc:  # red, clave inválida, cuota, respuesta inesperada...
-                self.motivo_respaldo = str(exc) if isinstance(exc, llm.ErrorLLM) else f"{type(exc).__name__}: {exc}"
+                self.motivo_respaldo = llm.describir_motivo(exc)
         self.modo = "reglas"
         self._reiniciar()
         return self._ejecutar_reglas()
@@ -720,16 +723,6 @@ class AgenteEDA:
             self._preparar_datos_para_modelos()
         self._sintetizar()
         return self
-
-    @staticmethod
-    def _llamada_como_dict(c: Any) -> dict[str, Any]:
-        # Se conserva el objeto completo: Gemini 3 exige devolver la thought_signature (extra_content).
-        if hasattr(c, "model_dump"):
-            d = c.model_dump(exclude_none=True)
-            d["type"] = "function"
-            return d
-        return {"id": c.id, "type": "function",
-                "function": {"name": c.function.name, "arguments": c.function.arguments}}
 
     def _acciones(self) -> dict[str, Any]:
         return {
@@ -787,36 +780,11 @@ class AgenteEDA:
                     for c, s in sugerido.items()],
             }, ensure_ascii=False, default=str)},
         ]
-        herramientas = llm.herramientas(list(acciones))
-
-        for _ in range(self.max_iteraciones):
-            respuesta = llm.completar(
-                cliente, model=self.modelo, messages=mensajes, tools=herramientas, tool_choice="auto",
-                temperature=0)
-            msg = respuesta.choices[0].message
-            llamadas = msg.tool_calls or []
-            mensajes.append({
-                "role": "assistant", "content": msg.content,
-                **({"tool_calls": [self._llamada_como_dict(c) for c in llamadas]} if llamadas else {})})
-            if not llamadas:
-                mensajes.append({"role": "user", "content": "Continúa usando las herramientas hasta finalizar."})
-                continue
-
-            terminado = False
-            for llamada in llamadas:
-                try:
-                    args = json.loads(llamada.function.arguments or "{}")
-                except json.JSONDecodeError:
-                    args = {}
-                resultado = self._despachar(llamada.function.name, args, acciones, decisiones, titulos)
-                if llamada.function.name == "finalizar" and "error" not in resultado:
-                    terminado = True
-                mensajes.append({"role": "tool", "tool_call_id": llamada.id,
-                                 "content": json.dumps(resultado, ensure_ascii=False, default=str)})
-            if terminado:
-                break
-        else:
-            raise RuntimeError("El LLM no finalizó en el máximo de iteraciones.")
+        self.uso_llm = llm.bucle_herramientas(
+            cliente, self.modelo, mensajes, llm.herramientas(list(acciones)),
+            lambda nombre, args: self._despachar(nombre, args, acciones, decisiones, titulos),
+            self.max_iteraciones,
+        )
 
         self.plan = [
             {"clave": c, "paso": titulos[c], "ejecutar": decisiones[c][0], "razon": decisiones[c][1]}
@@ -959,6 +927,9 @@ class AgenteEDA:
             "table{border-collapse:collapse;font-size:13px;margin:8px 0}td,th{border:1px solid #ccc;padding:3px 7px}"
             "img{max-width:100%}.alta{color:#c9302c}.media{color:#ec971f}</style></head><body>",
             "<h1>Informe del Agente Inteligente de EDA</h1>",
+            f"<p><b>Modo:</b> {e(self.modo)}" + (f" — {e(self.modelo)}" if self.modo == "llm" else "") + "</p>",
+            *([f"<p><b>Motivo del respaldo:</b> {e(self.motivo_respaldo)}</p>"] if self.motivo_respaldo else []),
+            *([f"<p><b>Uso del LLM:</b> {e(llm.resumen_uso(self.uso_llm))}</p>"] if self.uso_llm else []),
             f"<p>{e(self.sintesis['resumen'])}</p>",
             "<h2>Plan del agente</h2><ul>",
         ]

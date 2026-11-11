@@ -1,15 +1,16 @@
-"""Integración con el LLM (Google Gemini) que gobierna el bucle agéntico del EDA.
+"""Integración con el LLM (Google Gemini) que gobierna el bucle agéntico de los agentes.
 
 Gemini expone un endpoint compatible con OpenAI, por lo que solo hace falta el paquete 'openai'.
 """
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any
+from typing import Any, Callable
 
 MODELO_POR_DEFECTO = os.environ.get("GEMINI_MODEL") or "gemini-3.5-flash"
 URL_BASE = "https://generativelanguage.googleapis.com/v1beta/openai/"
@@ -117,6 +118,95 @@ def completar(cliente, reintentos: int = 4, **kwargs):
                     ) from exc
                 raise
             time.sleep(_espera_reintento(exc, intento))
+
+
+def llamada_como_dict(llamada: Any) -> dict[str, Any]:
+    # Gemini 3 exige devolver la llamada completa (incluye thought_signature en extra_content).
+    if hasattr(llamada, "model_dump"):
+        resultado = llamada.model_dump(exclude_none=True)
+        resultado["type"] = "function"
+        return resultado
+    return {
+        "id": llamada.id,
+        "type": "function",
+        "function": {"name": llamada.function.name, "arguments": llamada.function.arguments},
+    }
+
+
+def bucle_herramientas(
+    cliente: Any,
+    modelo: str,
+    mensajes: list[dict[str, Any]],
+    herramientas: list[dict[str, Any]],
+    despachar: Callable[[str, dict[str, Any]], dict[str, Any]],
+    max_iteraciones: int,
+) -> dict[str, int]:
+    """Bucle de tool calling común a los agentes.
+
+    Termina cuando 'finalizar' se ejecuta sin error y devuelve estadísticas de uso del LLM.
+    Lanza RuntimeError si el LLM no finaliza dentro de max_iteraciones.
+    """
+    uso = {
+        "iteraciones": 0,
+        "llamadas_herramientas": 0,
+        "errores_herramientas": 0,
+        "tokens_entrada": 0,
+        "tokens_salida": 0,
+    }
+    for _ in range(max_iteraciones):
+        uso["iteraciones"] += 1
+        respuesta = completar(
+            cliente, model=modelo, messages=mensajes, tools=herramientas, tool_choice="auto", temperature=0
+        )
+        consumo = getattr(respuesta, "usage", None)
+        if consumo is not None:
+            uso["tokens_entrada"] += int(getattr(consumo, "prompt_tokens", 0) or 0)
+            uso["tokens_salida"] += int(getattr(consumo, "completion_tokens", 0) or 0)
+        mensaje = respuesta.choices[0].message
+        llamadas = mensaje.tool_calls or []
+        mensajes.append({
+            "role": "assistant",
+            "content": mensaje.content,
+            **({"tool_calls": [llamada_como_dict(c) for c in llamadas]} if llamadas else {}),
+        })
+        if not llamadas:
+            mensajes.append({"role": "user", "content": "Continúa usando las herramientas hasta finalizar."})
+            continue
+        terminado = False
+        for llamada in llamadas:
+            uso["llamadas_herramientas"] += 1
+            try:
+                args = json.loads(llamada.function.arguments or "{}")
+            except json.JSONDecodeError:
+                args = {}
+            if not isinstance(args, dict):
+                args = {}
+            salida = despachar(llamada.function.name, args)
+            if "error" in salida:
+                uso["errores_herramientas"] += 1
+            elif llamada.function.name == "finalizar":
+                terminado = True
+            mensajes.append({
+                "role": "tool",
+                "tool_call_id": llamada.id,
+                "content": json.dumps(salida, ensure_ascii=False, default=str),
+            })
+        if terminado:
+            return uso
+    raise RuntimeError("El LLM no finalizó dentro del máximo de iteraciones.")
+
+
+def describir_motivo(error: Exception) -> str:
+    """Texto del motivo por el que un agente pasó al respaldo por reglas."""
+    return str(error) if isinstance(error, ErrorLLM) else f"{type(error).__name__}: {error}"
+
+
+def resumen_uso(uso: dict[str, int]) -> str:
+    return (
+        f"{uso.get('iteraciones', 0)} turnos, {uso.get('llamadas_herramientas', 0)} llamadas a herramientas "
+        f"({uso.get('errores_herramientas', 0)} rechazadas), {uso.get('tokens_entrada', 0)} tokens de entrada "
+        f"y {uso.get('tokens_salida', 0)} de salida."
+    )
 
 
 def recortar(texto: Any, limite: int = 500) -> Any:

@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from pages._agente_supervisado import seccion_agente
 from pages._shared import obtener_modelo
 from pages._theme import AMARILLO, CIAN, MAGENTA, ROJO as ROJO_NEON, VERDE as VERDE_NEON, brillo, grafico
 from supervised import ClasificacionModelos
@@ -377,6 +378,8 @@ columnas = df.columns.tolist()
 if len(columnas) < 2:
     st.warning("El archivo debe tener una columna objetivo y al menos un predictor.")
     st.stop()
+
+seccion_agente("clasificacion", df)
 
 # ---------------------------------------------------------------------------
 # PASO 1: Generar datos (partición aprendizaje / prueba)
