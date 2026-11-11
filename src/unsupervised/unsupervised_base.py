@@ -1,4 +1,6 @@
+import numpy as np
 import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
 from EDA.dataframe import DataFrame
@@ -9,6 +11,16 @@ class UnsupervisedBase(DataFrame):
 
         if datos.empty:
             raise ValueError("No hay datos para procesar.")
+
+        datos = datos.copy()
+        numericas = datos.select_dtypes(include=np.number).columns.tolist()
+        categoricas = [columna for columna in datos.columns if columna not in numericas]
+        if numericas:
+            datos[numericas] = SimpleImputer(strategy="median").fit_transform(datos[numericas])
+        for columna in categoricas:
+            moda = datos[columna].mode(dropna=True)
+            valor = moda.iloc[0] if not moda.empty else "Desconocido"
+            datos[columna] = datos[columna].astype(object).fillna(valor)
 
         datos_codificados = pd.get_dummies(datos, drop_first=True)
 

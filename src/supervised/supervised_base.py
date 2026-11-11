@@ -49,8 +49,9 @@ class SupervisadoBase(DataFrame):
         data = self.dataframe
         if data.empty:
             raise ValueError("No hay datos para procesar.")
-        if data[self.target].isna().any():
-            raise ValueError("La variable objetivo contiene valores nulos.")
+        data = data.dropna(subset=[self.target])
+        if data.empty:
+            raise ValueError("No quedan filas con una variable objetivo válida.")
 
         columns = self.feature_columns or [
             column for column in data.columns if column != self.target

@@ -1,13 +1,14 @@
 from pathlib import Path
 import sys
 
+import numpy as np
 import pandas as pd
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from Eda.dataframe import DataFrame
+from EDA.dataframe import DataFrame
 from model import DataModel
 from supervised import ClasificacionModelos
 from unsupervised.unsupervised_base import UnsupervisedBase
@@ -100,6 +101,39 @@ def test_pca_rechaza_dataframe_vacio():
 
     with pytest.raises(ValueError, match="No hay datos"):
         datos.pca()
+
+
+def test_preparar_datos_no_supervisados_imputa_nulos():
+    datos = UnsupervisedBase(
+        pd.DataFrame(
+            {
+                "numero": [1.0, None, 3.0, 4.0],
+                "categoria": ["a", None, "b", "b"],
+            }
+        )
+    )
+
+    matriz, _ = datos.preparar_datos_numericos()
+
+    assert np.isfinite(matriz).all()
+
+
+def test_clasificacion_descarta_filas_sin_objetivo():
+    datos = pd.DataFrame(
+        {
+            "predictor": [1.0, None, 3.0, 4.0],
+            "objetivo": ["a", "a", None, "b"],
+        }
+    )
+    clasificador = ClasificacionModelos(
+        datos, target="objetivo", stratify=False
+    )
+
+    split = clasificador.prepare_data()
+
+    assert len(split.X_train) + len(split.X_test) == 3
+    assert split.y_train.notna().all()
+    assert split.y_test.notna().all()
 
 
 def test_clasificacion_knn_preprocesa_categorias_y_evalua_multiclase(model):

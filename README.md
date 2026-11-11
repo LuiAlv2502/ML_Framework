@@ -25,15 +25,24 @@ python -m streamlit run app.py
 
 Streamlit abrirá la aplicación en el navegador. Para detenerla, presione `Ctrl+C` en la terminal.
 
+Para habilitar los agentes con Gemini, configure `GEMINI_API_KEY` antes de iniciar la app. En PowerShell:
+
+```powershell
+$env:GEMINI_API_KEY = "su_clave"
+```
+
+En CMD, use `set "GEMINI_API_KEY=su_clave"`. Si no configura la variable o Gemini no está disponible, los agentes usan su respaldo basado en reglas. Ante HTTP 429, el cliente respeta el tiempo de espera que informe Gemini y reintenta; si la cuota sigue agotada, revise los límites de AI Studio y vuelva a intentarlo cuando se restablezcan. Los reintentos no pueden evitar una cuota diaria agotada. Nunca incluya la clave en el repositorio ni la comparta.
+
 ## Uso de la aplicación
 
 1. Ejecute `streamlit run app.py` desde la raíz del proyecto.
-2. En la barra lateral, cargue un archivo CSV. El mismo conjunto de datos queda disponible en las páginas de la aplicación durante la sesión.
-3. Seleccione una página desde la navegación:
+2. En la barra lateral, cargue un archivo CSV. El CSV original se conserva y queda disponible durante la sesión.
+3. La página **EDA** es opcional: puede revisar el resumen, las distribuciones y las relaciones, y continuar directamente con los análisis. Si ejecuta **Agente inteligente EDA**, su preparación se activa para los análisis; si planea clasificación o regresión, puede seleccionar ahí la variable objetivo para orientar sus recomendaciones.
+4. Seleccione una página desde la navegación:
    - **No supervisado**: vista previa, estadísticas descriptivas, conteo de nulos, correlación e histogramas de columnas numéricas; reducción dimensional con PCA, t-SNE o UMAP; agrupamiento con K-Means o HAC y método del codo.
    - **Supervisado - Clasificación**: seleccione la variable objetivo, la proporción de prueba y el algoritmo; entrene y consulte métricas, matriz de confusión e informe por clase.
-   - **Supervisado - Predicción**: página reservada para regresión; el módulo todavía no está implementado.
-4. La aplicación muestra los controles pertinentes para los parámetros del método elegido.
+   - **Supervisado - Predicción**: seleccione una variable objetivo numérica, configure la partición y el algoritmo de regresión, y consulte las métricas.
+5. Los análisis usan el CSV original si no se ha aplicado ningún cambio, los cambios manuales de limpieza y transformación si los hiciste en **EDA**, o la copia preparada por el agente si lo ejecutaste. La última preparación o cambio realizado determina los datos activos; **Restaurar datos originales** vuelve al CSV cargado. Los valores faltantes de predictores supervisados se imputan en el pipeline después de dividir entrenamiento y prueba; las filas sin etiqueta objetivo no se usan para entrenar. En no supervisado, las variables faltantes se imputan antes de codificar y escalar.
 
 El archivo `data/drug200.csv` se incluye como conjunto de ejemplo. También puede cargar otro CSV desde la interfaz.
 
@@ -46,8 +55,31 @@ En la página **No supervisado** se ofrecen:
 - PCA en dos o tres dimensiones, con varianza explicada y visualizaciones.
 - t-SNE y UMAP en dos o tres dimensiones, con parámetros configurables.
 - K-Means y HAC, selección del número de clústeres, método del codo y visualización de los grupos proyectados mediante PCA.
+- Agente inteligente no supervisado: puede ejecutar PCA, método del codo, K-Means y HAC, y muestra métricas y perfiles calculados por Python. Gemini recibe el perfil agregado y los resultados, no las filas del CSV; si no está disponible, se usa un flujo por reglas. HAC se limita a conjuntos de hasta 2,000 filas.
 
 En **Supervisado - Clasificación** se ofrecen KNN, árbol de decisión, Random Forest, Gradient Boosting, AdaBoost y XGBoost. Se presentan *accuracy*, precisión macro, *recall* macro, F1 macro, matriz de confusión e informe por clase.
+
+En **Supervisado - Clasificación** y **Supervisado - Predicción** también está el **agente inteligente supervisado** (opcional). La variable objetivo la elige el usuario o, si no la indica, el LLM. El agente excluye identificadores y valida algoritmos de al menos tres familias distintas (lineal, kernel, vecinos, árbol, *bagging*, *boosting*) en varias particiones *hold-out*. Muestra un ranking con media ± desviación de F1 macro (clasificación) o RMSE (regresión). Al terminar se autoevalúa: compara el mejor modelo con una línea base (clase mayoritaria o predecir la media) y revisa la estabilidad entre particiones. El informe puede descargarse en HTML.
+
+### Arquitectura de los agentes (`src/agents`)
+
+Los agentes inteligentes del proyecto (`AgenteEDA`, `AgenteNoSupervisado`, `AgenteClasificacion` y `AgenteRegresion`) integran el ciclo de análisis de datos con la capacidad del modelo de lenguaje para interpretar el perfil del conjunto, sugerir pasos y ejecutar tareas sobre el backend de Python. Cada agente trabaja sobre una vista agregada del dataset y nunca envía filas completas del CSV al LLM; solo comparte estadísticas, perfiles y resultados resumidos, lo que mantiene la solución segura y eficiente.
+
+`AgenteClasificacion` y `AgenteRegresion` heredan de la base común `AgenteSupervisado` y solo redefinen sus algoritmos, métrica principal, columna válida como objetivo y línea base del problema. En general, el flujo es el siguiente:
+
+1. **Percibir** (`percibir`): construye un perfil agregado del dataset (tipos, nulos, distribuciones, correlaciones y restricciones del problema). Este resumen orienta la estrategia del agente sin revelar filas individuales.
+2. **Planificar** (`planificar`): genera un plan inicial basado en reglas y en las limitaciones del problema. El plan incluye los pasos recomendados, los algoritmos factibles y la justificación de cada decisión.
+3. **Actuar** (`_ejecutar_con_llm`): el LLM selecciona llamadas a herramientas del backend mediante *tool calling*. Python valida las entradas y ejecuta las operaciones propuestas (_despachar), reutilizando la lógica del proyecto en `src/supervised`, `src/unsupervised` y el modelo MVC.
+4. **Autoevaluar**: se revisa la calidad del resultado generado, comprobando si el análisis es consistente, si la preparación es apropiada y si el rendimiento supera una línea base. En clasificación y regresión también se evalúa la estabilidad entre particiones.
+5. **Informar**: cada agente registra su bitácora (`bitacora`), genera un informe HTML (`informe_html()` / `guardar_informe()`) y recopila estadísticas de uso del LLM (`uso_llm` con turnos, llamadas y tokens).
+
+Los agentes no son un reemplazo del flujo manual, sino un apoyo inteligente para automatizar el análisis. Por ejemplo:
+
+- `AgenteEDA` sugiere limpieza, transformaciones y señales de valor para el problema de negocio o analítico.
+- `AgenteNoSupervisado` ejecuta PCA, método del codo, K-Means y HAC, y resumir los perfiles y métricas calculadas.
+- `AgenteClasificacion` y `AgenteRegresion` entrenan varios modelos, comparan familias de algoritmos y entregan un ranking con su rendimiento.
+
+Si el LLM no está disponible, falla o no logra finalizar dentro de `max_iteraciones`, el agente cae al **respaldo por reglas** (`modo == "reglas"`) y guarda la causa en `motivo_respaldo`. Así, la aplicación sigue funcionando aunque el servicio de IA no responda.
 
 > La interfaz Streamlit no expone todos los métodos de manipulación y análisis del modelo MVC descritos más abajo. Esas operaciones siguen disponibles a través de la API Python de `DataModel`; las páginas de la aplicación muestran el subconjunto implementado en cada flujo.
 

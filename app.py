@@ -16,9 +16,10 @@ aplicar_estilo()
 pg = st.navigation(
     [
         st.Page(
-            "pages/agent_eda.py",
-            title="Agente inteligente EDA",
+            "pages/eda.py",
+            title="EDA",
             icon=":material/smart_toy:",
+            default=True,
         ),
         st.Page(
             "pages/unsupervised.py",

@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from pages._supervised_agent import seccion_agente
 from pages._shared import obtener_modelo
 from pages._theme import AMARILLO, CIAN, MAGENTA, ROJO as ROJO_NEON, VERDE as VERDE_NEON, brillo, grafico
 from supervised import ClasificacionModelos
@@ -368,7 +369,7 @@ def _mostrar_indices(label, resultado, exp_idx, nombres_clase):
 # ---------------------------------------------------------------------------
 st.title("Supervisado - Clasificación")
 
-model = obtener_modelo()
+model = obtener_modelo(recomendar_eda=True)
 if model is None:
     st.stop()
 
@@ -377,6 +378,8 @@ columnas = df.columns.tolist()
 if len(columnas) < 2:
     st.warning("El archivo debe tener una columna objetivo y al menos un predictor.")
     st.stop()
+
+seccion_agente("clasificacion", df)
 
 # ---------------------------------------------------------------------------
 # PASO 1: Generar datos (partición aprendizaje / prueba)
@@ -399,6 +402,12 @@ with st.container(border=True):
         columnas,
         index=objetivo_inicial,
     )
+    etiquetas_faltantes = int(df[objetivo].isna().sum())
+    if etiquetas_faltantes:
+        st.warning(
+            f"Se excluirán {etiquetas_faltantes} filas sin etiqueta en '{objetivo}'; "
+            "no se inventan valores para la variable que se va a predecir."
+        )
     objetivo_clases = df[objetivo].nunique()
     if objetivo_clases > MAX_CLASES:
         st.warning(

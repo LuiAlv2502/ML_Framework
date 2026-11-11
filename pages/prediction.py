@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from pages._supervised_agent import seccion_agente
 from pages._shared import obtener_modelo
 from pages._theme import (
     AMARILLO,
@@ -329,7 +330,7 @@ def _mostrar_indices(label, resultado, exp_idx, objetivo):
 # ---------------------------------------------------------------------------
 st.title("Supervisado - Predicción")
 
-model = obtener_modelo()
+model = obtener_modelo(recomendar_eda=True)
 if model is None:
     st.stop()
 
@@ -339,6 +340,8 @@ numericas = df.select_dtypes(include=np.number).columns.tolist()
 if not numericas or len(columnas) < 2:
     st.warning("El archivo debe tener una variable objetivo numérica y al menos un predictor.")
     st.stop()
+
+seccion_agente("regresion", df)
 
 # ---------------------------------------------------------------------------
 # PASO 1: Generar datos
@@ -355,6 +358,12 @@ with st.container(border=True):
         index=len(numericas) - 1,
         key="reg_objetivo",
     )
+    etiquetas_faltantes = int(df[objetivo].isna().sum())
+    if etiquetas_faltantes:
+        st.warning(
+            f"Se excluirán {etiquetas_faltantes} filas sin valor en '{objetivo}'; "
+            "no se imputan los resultados que el modelo debe predecir."
+        )
     if df[objetivo].nunique() <= 10:
         st.warning(
             f"'{objetivo}' tiene pocos valores distintos; podría ser más adecuada "
