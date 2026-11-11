@@ -63,15 +63,23 @@ En **Supervisado - Clasificación** y **Supervisado - Predicción** también est
 
 ### Arquitectura de los agentes (`src/agents`)
 
-Los agentes (`AgenteEDA`, `AgenteNoSupervisado`, `AgenteClasificacion` y `AgenteRegresion`) siguen el mismo ciclo y la misma interfaz. `AgenteClasificacion` y `AgenteRegresion` heredan de la base común `AgenteSupervisado` y solo definen sus algoritmos, su métrica principal, qué columna es válida como objetivo y su línea base:
+Los agentes inteligentes del proyecto (`AgenteEDA`, `AgenteNoSupervisado`, `AgenteClasificacion` y `AgenteRegresion`) integran el ciclo de análisis de datos con la capacidad del modelo de lenguaje para interpretar el perfil del conjunto, sugerir pasos y ejecutar tareas sobre el backend de Python. Cada agente trabaja sobre una vista agregada del dataset y nunca envía filas completas del CSV al LLM; solo comparte estadísticas, perfiles y resultados resumidos, lo que mantiene la solución segura y eficiente.
 
-1. **Percibir** (`percibir`): perfil agregado de los datos; al LLM nunca se le envían filas.
-2. **Planificar** (`planificar`): plan sugerido por reglas con los pasos o algoritmos factibles y su razón.
-3. **Actuar** (`_ejecutar_con_llm`): el LLM elige herramientas mediante *tool calling*; Python valida cada argumento (`_despachar`) y ejecuta los algoritmos del framework. El bucle común está en `llm.bucle_herramientas`.
-4. **Autoevaluar**: el agente revisa la calidad de sus resultados (síntesis del EDA, silhouette y varianza explicada, línea base y estabilidad en supervisado).
-5. **Informar**: `bitacora` (observación, razonamiento, acción), `informe_html()` / `guardar_informe()` y `uso_llm` (turnos, llamadas y tokens).
+`AgenteClasificacion` y `AgenteRegresion` heredan de la base común `AgenteSupervisado` y solo redefinen sus algoritmos, métrica principal, columna válida como objetivo y línea base del problema. En general, el flujo es el siguiente:
 
-Si el LLM no está disponible, falla o no finaliza dentro de `max_iteraciones`, el agente pasa al **respaldo por reglas** (`modo == "reglas"`) y deja el motivo en `motivo_respaldo`.
+1. **Percibir** (`percibir`): construye un perfil agregado del dataset (tipos, nulos, distribuciones, correlaciones y restricciones del problema). Este resumen orienta la estrategia del agente sin revelar filas individuales.
+2. **Planificar** (`planificar`): genera un plan inicial basado en reglas y en las limitaciones del problema. El plan incluye los pasos recomendados, los algoritmos factibles y la justificación de cada decisión.
+3. **Actuar** (`_ejecutar_con_llm`): el LLM selecciona llamadas a herramientas del backend mediante *tool calling*. Python valida las entradas y ejecuta las operaciones propuestas (_despachar), reutilizando la lógica del proyecto en `src/supervised`, `src/unsupervised` y el modelo MVC.
+4. **Autoevaluar**: se revisa la calidad del resultado generado, comprobando si el análisis es consistente, si la preparación es apropiada y si el rendimiento supera una línea base. En clasificación y regresión también se evalúa la estabilidad entre particiones.
+5. **Informar**: cada agente registra su bitácora (`bitacora`), genera un informe HTML (`informe_html()` / `guardar_informe()`) y recopila estadísticas de uso del LLM (`uso_llm` con turnos, llamadas y tokens).
+
+Los agentes no son un reemplazo del flujo manual, sino un apoyo inteligente para automatizar el análisis. Por ejemplo:
+
+- `AgenteEDA` sugiere limpieza, transformaciones y señales de valor para el problema de negocio o analítico.
+- `AgenteNoSupervisado` ejecuta PCA, método del codo, K-Means y HAC, y resumir los perfiles y métricas calculadas.
+- `AgenteClasificacion` y `AgenteRegresion` entrenan varios modelos, comparan familias de algoritmos y entregan un ranking con su rendimiento.
+
+Si el LLM no está disponible, falla o no logra finalizar dentro de `max_iteraciones`, el agente cae al **respaldo por reglas** (`modo == "reglas"`) y guarda la causa en `motivo_respaldo`. Así, la aplicación sigue funcionando aunque el servicio de IA no responda.
 
 > La interfaz Streamlit no expone todos los métodos de manipulación y análisis del modelo MVC descritos más abajo. Esas operaciones siguen disponibles a través de la API Python de `DataModel`; las páginas de la aplicación muestran el subconjunto implementado en cada flujo.
 
