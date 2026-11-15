@@ -25,7 +25,7 @@ entrega no se ejecutó una matriz de pruebas para todas las versiones admitidas.
 | Guía y dependencias | Completo | README actualizado; versiones de ejecución fijadas en `requirements.txt` y herramientas de desarrollo separadas. |
 | Capturas de la interfaz | Pendiente manual | `docs/evidencias/CAPTURAS.md` describe las capturas requeridas; no se incluyen imágenes simuladas. |
 | Procedencia y licencias de CSV heredados | Pendiente de confirmación | Los metadatos de origen no están disponibles en el repositorio. |
-| ZIP final limpio | Pendiente de bloque F | Se validará generando y probando el paquete desde una extracción temporal. |
+| Paquete ZIP | Excluido por solicitud | No se generará ni validará un ZIP de entrega. |
 
 ## Algoritmos y parámetros
 
