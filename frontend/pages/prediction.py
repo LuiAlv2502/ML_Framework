@@ -59,6 +59,14 @@ def _parametros_modelo(algoritmo, predictores_numericos, profundidad_opts):
                                      key=f"{k}_alpha")
     elif algoritmo == "LassoCV (alpha óptimo)":
         p["cv"] = st.slider("Pliegues de validación cruzada", 2, 10, 5, key=f"{k}_cv")
+    elif algoritmo == "RidgeCV (alpha óptimo)":
+        p["alphas"] = st.multiselect(
+            "Valores de penalización a comparar",
+            [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
+            default=[0.01, 0.1, 1.0, 10.0, 100.0],
+            key=f"{k}_alphas",
+            help="RidgeCV elegirá el valor con menor error en la validación cruzada.",
+        )
     elif algoritmo == "Máquina de soporte vectorial (SVR)":
         p["kernel"] = st.selectbox("Núcleo (kernel)", ["rbf", "linear", "poly", "sigmoid"], key=f"{k}_kernel")
         p["C"] = st.number_input("C", min_value=0.01, max_value=10_000.0, value=100.0, step=10.0, key=f"{k}_c")

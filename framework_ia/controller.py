@@ -176,6 +176,11 @@ class FrameworkController:
                 task=task, dataset=self.datasets.dataset_dict(), config=_publico(contenido), result=detalle,
                 agents=resultado["agents_used"], decisions=resultado["decisions"], messages=mensajes,
                 best_model=str(mejor) if mejor is not None else None, started_at=inicio,
+                coordination={
+                    "policy": resultado["policy"],
+                    "candidates": resultado["candidates"],
+                    "selected_agent": resultado["selected_agent"],
+                },
             )
         self.last_task = {"task": task, "ok": True, "agent": resultado["selected_agent"],
                           "run_id": resultado.get("run_id")}
@@ -201,6 +206,11 @@ class FrameworkController:
             task="eda", dataset=self.datasets.dataset_dict(), config=payload, result=resultado["result"],
             agents=resultado["agents_used"], decisions=resultado["decisions"], messages=mensajes,
             started_at=inicio,
+            coordination={
+                "policy": resultado["policy"],
+                "candidates": resultado["candidates"],
+                "selected_agent": resultado["selected_agent"],
+            },
         )
         self.eda_result = resultado
         self.eda_hash = (self.datasets.info.hash if self.datasets.info else None)
@@ -317,6 +327,20 @@ class FrameworkController:
         if definition.get("agent_type") == "coordinator":
             raise ValidationError("Solo puede existir un coordinador.")
         return self.agency.create_agent(definition, persist=persist).describe()
+
+    def probe_agent(self, agent_id: str, capability: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Pone un agente primero temporalmente y comprueba su descubrimiento por el coordinador."""
+        agente = self.agency.registry.get(agent_id)
+        if capability not in agente.capabilities:
+            raise ValidationError(f"El agente '{agente.name}' no tiene asignada la tarea '{capability}'.")
+        anteriores = {a.agent_id: a.priority for a in self.agency.registry.find_by_capability(capability)}
+        try:
+            for candidato in self.agency.registry.find_by_capability(capability):
+                candidato.priority = 100 if candidato.agent_id == agent_id else min(candidato.priority, 99)
+            return self.run_task(capability, payload)
+        finally:
+            for candidato_id, prioridad in anteriores.items():
+                self.agency.registry.get(candidato_id).priority = prioridad
 
     def remove_agent(self, agent_id: str) -> None:
         self.agency.remove_agent(agent_id, forget=True)

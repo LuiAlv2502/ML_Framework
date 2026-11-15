@@ -16,7 +16,7 @@ CATALOGO: dict[str, dict[str, Any]] = {
     "lasso": {"params": {"alpha": ("real", 0.0001, 10_000.0)}},
     "lasso_cv": {"params": {"cv": ("entero", 2, 10)}},
     "ridge": {"params": {"alpha": ("real", 0.0001, 10_000.0)}},
-    "ridge_cv": {"params": {}},
+    "ridge_cv": {"params": {"alphas": ("lista_reales", 0.0000000001, 100.0)}},
     "svr": {"params": {
         "kernel": ("opcion", ["rbf", "linear", "poly", "sigmoid"]),
         "C": ("real", 0.01, 10_000.0),

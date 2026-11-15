@@ -15,15 +15,20 @@ def main() -> None:
 
     pagina = st.navigation(
         [
-            st.Page(f"{PAGINAS}/eda.py", title="EDA", icon=":material/smart_toy:", default=True),
-            st.Page(f"{PAGINAS}/unsupervised.py", title="No supervisado", icon=":material/scatter_plot:"),
-            st.Page(f"{PAGINAS}/classification.py", title="Supervisado - Clasificación", icon=":material/category:"),
-            st.Page(f"{PAGINAS}/prediction.py", title="Supervisado - Predicción", icon=":material/trending_up:"),
+            st.Page(f"{PAGINAS}/home.py", title="Inicio", icon=":material/home:", default=True),
+            st.Page(f"{PAGINAS}/data.py", title="Datos", icon=":material/table_view:"),
+            st.Page(f"{PAGINAS}/eda.py", title="EDA", icon=":material/insights:"),
+            st.Page(f"{PAGINAS}/preprocessing.py", title="Preprocesamiento", icon=":material/tune:"),
+            st.Page(f"{PAGINAS}/unsupervised.py", title="Agrupamiento", icon=":material/scatter_plot:"),
+            st.Page(f"{PAGINAS}/classification.py", title="Clasificación", icon=":material/category:"),
+            st.Page(f"{PAGINAS}/prediction.py", title="Regresión", icon=":material/trending_up:"),
+            st.Page(f"{PAGINAS}/agents.py", title="MAS", icon=":material/groups:"),
+            st.Page(f"{PAGINAS}/experiments.py", title="Experimentos", icon=":material/science:"),
         ]
     )
 
     with st.sidebar:
         st.markdown("### Laboratorio IA")
-        st.caption("Análisis de datos con MVC + Streamlit · Night City edition")
+        st.caption("Framework multiagente + Streamlit")
 
     pagina.run()

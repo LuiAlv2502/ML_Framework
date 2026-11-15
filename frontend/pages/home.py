@@ -13,11 +13,10 @@ estado = controlador.mas_status()
 datos = estado.get("dataset")
 agentes = estado.get("agents", 0)
 
-columnas = st.columns(4)
+columnas = st.columns(3)
 columnas[0].metric("Agentes disponibles", estado.get("active", 0))
 columnas[1].metric("Agentes registrados", agentes)
-columnas[2].metric("Mensajes procesados", estado.get("messages", 0))
-columnas[3].metric("Tipos de tareas", estado.get("capabilities", 0))
+columnas[2].metric("Tipos de tareas", estado.get("capabilities", 0))
 
 if datos:
     st.subheader("Datos activos")
@@ -29,6 +28,19 @@ if datos:
     columnas[3].metric("Valores faltantes", resumen["nulls_total"])
 else:
     st.info("Aún no hay datos cargados. Abre **Datos** para cargar un archivo o probar un conjunto incluido.")
+
+st.subheader("Mensajes recientes")
+mensajes = controlador.list_messages(limit=5)
+if mensajes:
+    st.dataframe(
+        [{"Hora": mensaje["timestamp"], "Emisor": mensaje["sender"], "Receptor": mensaje["receiver"],
+          "Tarea": mensaje["task"], "Estado": mensaje["status"]}
+         for mensaje in mensajes[::-1]],
+        width="stretch",
+        hide_index=True,
+    )
+else:
+    st.caption("Los mensajes entre componentes aparecerán aquí cuando se ejecuten análisis.")
 
 servicio_ia = estado.get("llm", {})
 if servicio_ia.get("available"):
