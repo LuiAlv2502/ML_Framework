@@ -6,7 +6,7 @@ import streamlit as st
 
 from frontend.components.shared import ejecutar, obtener_datos, pie_de_ejecucion
 from frontend.components.theme import (
-    AMARILLO,
+    AZUL_SUAVE,
     CIAN,
     MAGENTA,
     REJILLA,
@@ -160,7 +160,7 @@ with tab_reduccion:
                 fig_var.add_bar(x=nombres, y=var_exp, name="Individual", marker=dict(color=CIAN),
                                 text=[f"{v:.1%}" for v in var_exp], textposition="outside")
                 fig_var.add_scatter(x=nombres, y=np.cumsum(var_exp), name="Acumulada", mode="lines+markers",
-                                    line=dict(color=AMARILLO, width=3), marker=dict(size=10, symbol="diamond"))
+                                    line=dict(color=AZUL_SUAVE, width=3), marker=dict(size=10, symbol="diamond"))
                 fig_var.update_yaxes(tickformat=".0%", range=[0, 1.1])
                 grafico(brillo(fig_var), height=500)
             with c_circ:
@@ -218,7 +218,7 @@ with tab_agente:
             fig_codo = px.line(x=inercias.index, y=inercias.to_numpy(), markers=True,
                                labels={"x": "Número de grupos (k)", "y": "Inercia"},
                                title="Inercia por número de grupos")
-            fig_codo.update_traces(line=dict(color=AMARILLO, width=3))
+            fig_codo.update_traces(line=dict(color=AZUL_SUAVE, width=3))
             grafico(brillo(fig_codo), height=420)
         for clave in ("kmeans", "hac"):
             if clave not in resultados:
@@ -295,7 +295,7 @@ with tab_cluster:
     if codo_guardado is not None:
         inercias = codo_guardado["resultado"]["result"]["inertias"]
         fig = go.Figure(go.Scatter(x=inercias["k"], y=inercias["inercia"], mode="lines+markers",
-                                   line=dict(color=AMARILLO, width=3),
+                                   line=dict(color=AZUL_SUAVE, width=3),
                                    marker=dict(size=10, color=CIAN, symbol="diamond"), name="Inercia"))
         fig.add_vline(x=codo_guardado["k"], line=dict(color=MAGENTA, dash="dash"))
         fig.update_layout(title="Método del codo", xaxis_title="k", yaxis_title="Inercia")
@@ -329,7 +329,7 @@ with tab_cluster:
         centros = datos_c["centers"]
         fig.add_scatter(x=centros["PC1"], y=centros["PC2"], mode="markers+text", text=centros.index,
                         textposition="top center", name="Centros",
-                        marker=dict(symbol="x", size=16, color=AMARILLO, line=dict(width=2, color=AMARILLO)))
+                        marker=dict(symbol="x", size=16, color=AZUL_SUAVE, line=dict(width=2, color=AZUL_SUAVE)))
         with g1:
             grafico(fig, height=520)
         conteo = pd.Series(datos_c["sizes"])

@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import streamlit as st
 
-# Paleta Cyberpunk 2077: amarillo de la marca, cian/rojo del HUD y neones de Night City
-AMARILLO = "#FCEE0A"
+# Acento azul suave sobre la paleta oscura.
+AZUL_SUAVE = "#8DB8DC"
 CIAN = "#00F0FF"
 TURQUESA = "#55EAD4"
 ROJO = "#FF003C"
@@ -22,13 +22,13 @@ REJILLA = "#262640"
 TEXTO = "#E6E6F0"
 TEXTO_SUAVE = "#9A9AB8"
 
-SECUENCIA = [CIAN, AMARILLO, MAGENTA, VERDE, ROSA_NEON, NARANJA, TURQUESA, ROJO, VIOLETA]
+SECUENCIA = [CIAN, AZUL_SUAVE, MAGENTA, VERDE, ROSA_NEON, NARANJA, TURQUESA, ROJO, VIOLETA]
 ESCALA_CONTINUA = [
     [0.0, "#0D0221"],
     [0.25, VIOLETA],
     [0.5, ROSA_NEON],
     [0.75, MAGENTA],
-    [1.0, AMARILLO],
+    [1.0, AZUL_SUAVE],
 ]
 ESCALA_DIVERGENTE = [
     [0.0, CIAN],
@@ -44,7 +44,7 @@ def _ejes():
     return dict(
         gridcolor=REJILLA,
         linecolor=CIAN,
-        zerolinecolor=AMARILLO,
+        zerolinecolor=AZUL_SUAVE,
         zerolinewidth=1,
         tickcolor=REJILLA,
         title=dict(font=dict(color=CIAN)),
@@ -56,7 +56,7 @@ def _ejes_3d():
     return dict(
         backgroundcolor=PANEL,
         gridcolor=REJILLA,
-        zerolinecolor=AMARILLO,
+        zerolinecolor=AZUL_SUAVE,
         linecolor=CIAN,
         showbackground=True,
         title=dict(font=dict(color=CIAN)),
@@ -69,7 +69,7 @@ _plantilla = go.layout.Template(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor=PANEL,
         font=dict(family=FUENTE, color=TEXTO, size=14),
-        title=dict(font=dict(family=FUENTE_TITULO, color=AMARILLO, size=18), x=0.01),
+        title=dict(font=dict(family=FUENTE_TITULO, color=AZUL_SUAVE, size=18), x=0.01),
         xaxis=_ejes(),
         yaxis=_ejes(),
         scene=dict(xaxis=_ejes_3d(), yaxis=_ejes_3d(), zaxis=_ejes_3d()),
@@ -81,7 +81,7 @@ _plantilla = go.layout.Template(
         ),
         hoverlabel=dict(
             bgcolor=FONDO,
-            bordercolor=AMARILLO,
+            bordercolor=AZUL_SUAVE,
             font=dict(family=FUENTE, color=TEXTO),
         ),
         coloraxis=dict(
@@ -154,8 +154,8 @@ h1 {{
     font-family: {FUENTE_TITULO} !important;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: {AMARILLO} !important;
-    text-shadow: 0 0 6px rgba(252, 238, 10, 0.55), 3px 3px 0 {ROJO_OSCURO};
+    color: {AZUL_SUAVE} !important;
+    text-shadow: 0 0 6px rgba(141, 184, 220, 0.25);
     border-left: 6px solid {CIAN};
     padding-left: 0.6rem !important;
 }}
@@ -183,7 +183,7 @@ h3, h4 {{
 [data-testid="stMetric"] {{
     background: linear-gradient(135deg, rgba(0,240,255,0.08), rgba(18,18,31,0.9));
     border: 1px solid {REJILLA};
-    border-left: 4px solid {AMARILLO};
+    border-left: 4px solid {AZUL_SUAVE};
     padding: 0.6rem 0.9rem;
     clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
 }}
@@ -213,21 +213,30 @@ h3, h4 {{
 
 .stButton > button:hover, .stDownloadButton > button:hover {{
     background: rgba(0, 240, 255, 0.12);
-    color: {AMARILLO};
-    border-color: {AMARILLO};
-    box-shadow: 0 0 12px rgba(252, 238, 10, 0.5);
+    color: {AZUL_SUAVE};
+    border-color: {AZUL_SUAVE};
+    box-shadow: 0 0 8px rgba(141, 184, 220, 0.25);
 }}
 
 .stButton > button[kind="primary"] {{
-    background: {AMARILLO};
-    color: #000 !important;
+    background: {AZUL_SUAVE};
+    color: {FONDO} !important;
     border: none;
     font-weight: 700;
 }}
 
 .stButton > button[kind="primary"]:hover {{
-    background: {CIAN};
-    box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);
+    background: #A7C9E5;
+    box-shadow: 0 0 8px rgba(141, 184, 220, 0.35);
+}}
+
+[data-testid="stMultiSelect"] [data-baseweb="tag"] {{
+    background-color: {AZUL_SUAVE};
+    color: {FONDO};
+}}
+
+[data-testid="stMultiSelect"] [data-baseweb="tag"] svg {{
+    fill: currentColor;
 }}
 
 [data-baseweb="tab-list"] {{
@@ -244,13 +253,13 @@ h3, h4 {{
 }}
 
 [data-baseweb="tab"][aria-selected="true"] {{
-    background: rgba(252, 238, 10, 0.12);
-    color: {AMARILLO} !important;
+    background: rgba(141, 184, 220, 0.12);
+    color: {AZUL_SUAVE} !important;
 }}
 
 [data-baseweb="tab-highlight"] {{
-    background-color: {AMARILLO} !important;
-    box-shadow: 0 0 10px {AMARILLO};
+    background-color: {AZUL_SUAVE} !important;
+    box-shadow: 0 0 6px rgba(141, 184, 220, 0.35);
 }}
 
 [data-testid="stVerticalBlockBorderWrapper"] {{

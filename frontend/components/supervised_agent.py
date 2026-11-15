@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from frontend.components.shared import ejecutar, obtener_controlador, pie_de_ejecucion
-from frontend.components.theme import AMARILLO, CIAN, ESCALA_CONTINUA, MAGENTA, SECUENCIA, grafico
+from frontend.components.theme import AZUL_SUAVE, CIAN, ESCALA_CONTINUA, MAGENTA, SECUENCIA, grafico
 
 TITULOS = {"classification": "clasificación", "regression": "regresión"}
 CLAVES = {"classification": "agente_clasificacion", "regression": "agente_regresion"}
@@ -93,7 +93,7 @@ def _informe(ejecucion: dict, tipo: str, clave: str) -> None:
     columnas_num = [c for c in ranking.columns if c not in ("Modelo", "Algoritmo")]
     st.dataframe(
         ranking.style.format({c: "{:.4f}" for c in columnas_num}, na_rep="-").apply(
-            lambda fila: [f"background-color: rgba(252, 238, 10, 0.18); color: {AMARILLO}; font-weight: 700"
+            lambda fila: [f"background-color: rgba(141, 184, 220, 0.18); color: {AZUL_SUAVE}; font-weight: 700"
                           if fila["Modelo"] == agente["best"] else ""] * len(fila),
             axis=1,
         ),
@@ -107,7 +107,7 @@ def _informe(ejecucion: dict, tipo: str, clave: str) -> None:
         fig_barras = go.Figure(go.Bar(
             x=ranking[metrica], y=ranking["Modelo"], orientation="h",
             error_x=dict(type="data", array=ranking[f"Desv. {metrica}"], color=MAGENTA),
-            marker=dict(color=[AMARILLO if m == agente["best"] else CIAN for m in orden]),
+            marker=dict(color=[AZUL_SUAVE if m == agente["best"] else CIAN for m in orden]),
             text=ranking[metrica].map(lambda v: f"{v:.4f}"), textposition="inside",
         ))
         fig_barras.update_yaxes(categoryorder="array", categoryarray=orden[::-1])

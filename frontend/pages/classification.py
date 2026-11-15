@@ -5,7 +5,7 @@ import streamlit as st
 
 from frontend.components.shared import ejecutar, obtener_datos, pie_de_ejecucion
 from frontend.components.supervised_agent import seccion_agente
-from frontend.components.theme import AMARILLO, CIAN, MAGENTA, ROJO as ROJO_NEON, VERDE as VERDE_NEON, brillo, grafico
+from frontend.components.theme import AZUL_SUAVE, CIAN, MAGENTA, ROJO as ROJO_NEON, VERDE as VERDE_NEON, brillo, grafico
 
 ALGORITMOS = {
     "K Vecinos Más Cercanos": "knn",
@@ -480,7 +480,7 @@ with tab_comp:
                 largo["Serie"] = largo["Serie"].str.replace("Precisión ", "", regex=False)
                 figura = px.bar(largo, x="Modelo", y="Precisión", color="Serie", barmode="group",
                                 text=largo["Precisión"].map(lambda v: f"{v:.1f}%"),
-                                color_discrete_map={"Global": AMARILLO})
+                                color_discrete_map={"Global": AZUL_SUAVE})
                 figura.update_yaxes(range=[0, 100], title="Precisión (%)")
                 figura.for_each_trace(lambda t: t.update(visible="legendonly") if t.name != "Global" else None)
                 grafico(figura, key="grafico_comparativo", height=450)

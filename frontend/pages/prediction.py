@@ -6,7 +6,7 @@ import streamlit as st
 
 from frontend.components.shared import ejecutar, obtener_datos, pie_de_ejecucion
 from frontend.components.supervised_agent import seccion_agente
-from frontend.components.theme import AMARILLO, CIAN, ESCALA_CONTINUA, MAGENTA, ROJO, VERDE, brillo, grafico
+from frontend.components.theme import AZUL_SUAVE, CIAN, ESCALA_CONTINUA, MAGENTA, ROJO, VERDE, brillo, grafico
 
 ALGORITMOS = {
     "Regresión lineal simple": "regresion_lineal_simple",
@@ -131,7 +131,7 @@ def _mostrar_generacion(label, algoritmo, parametros, escalar, resultado, exp_id
             st.caption(f"{en_cero} coeficiente(s) quedaron en cero (variables descartadas).")
         fig = px.bar(coeficientes.iloc[::-1], x="coef", y="predictor", orientation="h", color="Signo",
                      color_discrete_map={"Positivo": CIAN, "Negativo": MAGENTA}, title="Coeficientes del modelo")
-        fig.add_vline(x=0, line=dict(color=AMARILLO, width=1))
+        fig.add_vline(x=0, line=dict(color=AZUL_SUAVE, width=1))
         grafico(fig, key=f"coef_{label}_{exp_idx}", height=max(320, 26 * len(coeficientes)))
 
 
@@ -139,7 +139,7 @@ def _grafico_simple(df, objetivo, columna, resultado, label, exp_idx):
     fig = px.scatter(df, x=columna, y=objetivo, opacity=0.7, title="Recta de regresión")
     fig.update_traces(marker=dict(color=CIAN, size=8))
     fig.add_scatter(x=resultado["line"]["x"], y=resultado["line"]["y"], mode="lines",
-                    line=dict(color=AMARILLO, width=3), name="Ajuste")
+                    line=dict(color=AZUL_SUAVE, width=3), name="Ajuste")
     grafico(brillo(fig), key=f"simple_{label}_{exp_idx}", height=450)
 
 
@@ -164,7 +164,7 @@ def _mostrar_indices(label, resultado, exp_idx, objetivo):
                              color_discrete_map={"Subestima": VERDE, "Sobreestima": ROJO},
                              hover_data=["ID", "Real"], title="Residuos")
         fig_res.update_traces(marker=dict(size=9))
-        fig_res.add_hline(y=0, line=dict(color=AMARILLO, width=2))
+        fig_res.add_hline(y=0, line=dict(color=AZUL_SUAVE, width=2))
         fig_res.update_layout(legend_title_text="", legend=dict(orientation="h", y=-0.2))
         grafico(fig_res, key=f"residuos_{label}_{exp_idx}", height=460)
 
@@ -179,7 +179,7 @@ def _mostrar_indices(label, resultado, exp_idx, objetivo):
 
     fig_hist = px.histogram(tabla, x="Residuo", nbins=30, marginal="box", title="Distribución de los residuos")
     fig_hist.update_traces(marker_color=MAGENTA, selector=dict(type="histogram"))
-    fig_hist.update_traces(marker_color=AMARILLO, selector=dict(type="box"))
+    fig_hist.update_traces(marker_color=AZUL_SUAVE, selector=dict(type="box"))
     t1, t2 = st.columns([1, 1])
     with t1:
         grafico(fig_hist, key=f"hist_res_{label}_{exp_idx}", height=400)
@@ -428,8 +428,8 @@ with tab_comp:
                 ascendente = metrica_graf != "R2"
                 ordenada = comparacion.sort_values(metrica_graf, ascending=ascendente)
                 figura = px.bar(ordenada, x="Modelo", y=metrica_graf, color=metrica_graf,
-                                color_continuous_scale=([[0, VERDE], [0.5, AMARILLO], [1, ROJO]] if ascendente
-                                                        else [[0, ROJO], [0.5, AMARILLO], [1, VERDE]]),
+                                color_continuous_scale=([[0, VERDE], [0.5, AZUL_SUAVE], [1, ROJO]] if ascendente
+                                                        else [[0, ROJO], [0.5, AZUL_SUAVE], [1, VERDE]]),
                                 text=ordenada[metrica_graf].map(lambda v: f"{v:.4f}"))
                 figura.update_layout(coloraxis_showscale=False)
                 grafico(figura, key="reg_grafico_comparativo", height=450)
@@ -462,7 +462,7 @@ with tab_bench:
         ganador = mejores.iloc[0]
         st.success(f"Mejor modelo: **{ganador['Modelo']}** ({ganador['Familia']}) · "
                    f"RMSE {ganador['RMSE']:.4f} · R² {ganador['R2']:.4f}")
-        colores_familia = dict(zip(tabla_familias["Familia"].unique(), [CIAN, MAGENTA, AMARILLO]))
+        colores_familia = dict(zip(tabla_familias["Familia"].unique(), [CIAN, MAGENTA, AZUL_SUAVE]))
         metrica_bench = st.radio("Índice", list(METRICAS), horizontal=True, key="reg_metrica_bench")
         ordenada = tabla_familias.sort_values(metrica_bench, ascending=metrica_bench != "R2")
         figura = px.bar(ordenada, x=metrica_bench, y="Modelo", color="Familia", orientation="h",

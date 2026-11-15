@@ -14,7 +14,7 @@ from frontend.components.shared import (
     restaurar_csv_original,
 )
 from frontend.components.theme import (
-    AMARILLO,
+    AZUL_SUAVE,
     CIAN,
     ESCALA_DIVERGENTE,
     MAGENTA,
@@ -237,7 +237,7 @@ with tab_calidad:
             orientation="h",
             text="Atípicos",
             color="% atípicos",
-            color_continuous_scale=[[0, VERDE], [0.5, AMARILLO], [1, ROJO]],
+            color_continuous_scale=[[0, VERDE], [0.5, AZUL_SUAVE], [1, ROJO]],
         )
         with o1:
             grafico(fig_out, key="eda_outliers", height=max(300, 32 * len(numericas)))
@@ -318,7 +318,7 @@ with tab_dist:
         x=col_freq,
         y="Frecuencia",
         color="Frecuencia",
-        color_continuous_scale=[[0, MAGENTA], [1, AMARILLO]],
+        color_continuous_scale=[[0, MAGENTA], [1, AZUL_SUAVE]],
         title="Top 30 valores" if len(tabla_freq) > 30 else None,
     )
     fig_freq.update_layout(coloraxis_showscale=False)
