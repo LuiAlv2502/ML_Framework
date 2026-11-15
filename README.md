@@ -1,286 +1,108 @@
-# Laboratorio de análisis de datos
+# Laboratorio IA
 
-Aplicación de análisis de datos desarrollada en Python. La interfaz principal utiliza **Streamlit** y permite cargar archivos CSV, explorar los datos, ejecutar análisis no supervisados y entrenar modelos de clasificación. La lógica de análisis se organiza en módulos reutilizables; los notebooks que quedan en el repositorio son material complementario y no son necesarios para ejecutar la aplicación.
+Aplicación local para explorar datos, prepararlos y probar análisis de agrupamiento, clasificación y regresión.
+La interfaz está en español y no requiere una clave de IA para cargar datos ni ejecutar los análisis principales.
 
 ## Requisitos
 
-- Python instalado.
-- Las dependencias indicadas en `requirements.txt`.
+- Python 3.11 o posterior. El entorno validado para esta entrega fue Python 3.13.7 en Windows.
+- Una instalación de las dependencias indicadas en `requirements.txt`.
+- Para compilar el informe PDF: MiKTeX u otra distribución con `pdflatex` y `bibtex`.
 
-## Instalación y ejecución
+## Instalación y ejecución en Windows
 
-Desde la carpeta raíz del proyecto, cree y active un entorno virtual e instale las dependencias:
+En PowerShell, desde la raíz del proyecto:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-```
-
-Inicie la aplicación con:
-
-```powershell
 python -m streamlit run app.py
 ```
 
-Streamlit abrirá la aplicación en el navegador. Para detenerla, presione `Ctrl+C` en la terminal.
-
-Para habilitar los agentes con Gemini, configure `GEMINI_API_KEY` antes de iniciar la app. En PowerShell:
-
-```powershell
-$env:GEMINI_API_KEY = "su_clave"
-```
-
-En CMD, use `set "GEMINI_API_KEY=su_clave"`. Si no configura la variable o Gemini no está disponible, los agentes usan su respaldo basado en reglas. Ante HTTP 429, el cliente respeta el tiempo de espera que informe Gemini y reintenta; si la cuota sigue agotada, revise los límites de AI Studio y vuelva a intentarlo cuando se restablezcan. Los reintentos no pueden evitar una cuota diaria agotada. Nunca incluya la clave en el repositorio ni la comparta.
-
-## Uso de la aplicación
-
-1. Ejecute `streamlit run app.py` desde la raíz del proyecto.
-2. En la barra lateral, cargue un archivo CSV. El CSV original se conserva y queda disponible durante la sesión.
-3. La página **EDA** es opcional: puede revisar el resumen, las distribuciones y las relaciones, y continuar directamente con los análisis. Si ejecuta **Agente inteligente EDA**, su preparación se activa para los análisis; si planea clasificación o regresión, puede seleccionar ahí la variable objetivo para orientar sus recomendaciones.
-4. Seleccione una página desde la navegación:
-   - **No supervisado**: vista previa, estadísticas descriptivas, conteo de nulos, correlación e histogramas de columnas numéricas; reducción dimensional con PCA, t-SNE o UMAP; agrupamiento con K-Means o HAC y método del codo.
-   - **Supervisado - Clasificación**: seleccione la variable objetivo, la proporción de prueba y el algoritmo; entrene y consulte métricas, matriz de confusión e informe por clase.
-   - **Supervisado - Predicción**: seleccione una variable objetivo numérica, configure la partición y el algoritmo de regresión, y consulte las métricas.
-5. Los análisis usan el CSV original si no se ha aplicado ningún cambio, los cambios manuales de limpieza y transformación si los hiciste en **EDA**, o la copia preparada por el agente si lo ejecutaste. La última preparación o cambio realizado determina los datos activos; **Restaurar datos originales** vuelve al CSV cargado. Los valores faltantes de predictores supervisados se imputan en el pipeline después de dividir entrenamiento y prueba; las filas sin etiqueta objetivo no se usan para entrenar. En no supervisado, las variables faltantes se imputan antes de codificar y escalar.
-
-El archivo `data/drug200.csv` se incluye como conjunto de ejemplo. También puede cargar otro CSV desde la interfaz.
-
-### Funciones disponibles en la interfaz Streamlit
-
-En la página **No supervisado** se ofrecen:
-
-- Exploración de las primeras filas y estadísticas descriptivas.
-- Conteo de valores nulos y análisis visual de correlación y distribución para variables numéricas.
-- PCA en dos o tres dimensiones, con varianza explicada y visualizaciones.
-- t-SNE y UMAP en dos o tres dimensiones, con parámetros configurables.
-- K-Means y HAC, selección del número de clústeres, método del codo y visualización de los grupos proyectados mediante PCA.
-- Agente inteligente no supervisado: puede ejecutar PCA, método del codo, K-Means y HAC, y muestra métricas y perfiles calculados por Python. Gemini recibe el perfil agregado y los resultados, no las filas del CSV; si no está disponible, se usa un flujo por reglas. HAC se limita a conjuntos de hasta 2,000 filas.
-
-En **Supervisado - Clasificación** se ofrecen KNN, árbol de decisión, Random Forest, Gradient Boosting, AdaBoost y XGBoost. Se presentan *accuracy*, precisión macro, *recall* macro, F1 macro, matriz de confusión e informe por clase.
-
-En **Supervisado - Clasificación** y **Supervisado - Predicción** también está el **agente inteligente supervisado** (opcional). La variable objetivo la elige el usuario o, si no la indica, el LLM. El agente excluye identificadores y valida algoritmos de al menos tres familias distintas (lineal, kernel, vecinos, árbol, *bagging*, *boosting*) en varias particiones *hold-out*. Muestra un ranking con media ± desviación de F1 macro (clasificación) o RMSE (regresión). Al terminar se autoevalúa: compara el mejor modelo con una línea base (clase mayoritaria o predecir la media) y revisa la estabilidad entre particiones. El informe puede descargarse en HTML.
-
-### Arquitectura de los agentes (`src/agents`)
-
-Los agentes inteligentes del proyecto (`AgenteEDA`, `AgenteNoSupervisado`, `AgenteClasificacion` y `AgenteRegresion`) integran el ciclo de análisis de datos con la capacidad del modelo de lenguaje para interpretar el perfil del conjunto, sugerir pasos y ejecutar tareas sobre el backend de Python. Cada agente trabaja sobre una vista agregada del dataset y nunca envía filas completas del CSV al LLM; solo comparte estadísticas, perfiles y resultados resumidos, lo que mantiene la solución segura y eficiente.
-
-`AgenteClasificacion` y `AgenteRegresion` heredan de la base común `AgenteSupervisado` y solo redefinen sus algoritmos, métrica principal, columna válida como objetivo y línea base del problema. En general, el flujo es el siguiente:
-
-1. **Percibir** (`percibir`): construye un perfil agregado del dataset (tipos, nulos, distribuciones, correlaciones y restricciones del problema). Este resumen orienta la estrategia del agente sin revelar filas individuales.
-2. **Planificar** (`planificar`): genera un plan inicial basado en reglas y en las limitaciones del problema. El plan incluye los pasos recomendados, los algoritmos factibles y la justificación de cada decisión.
-3. **Actuar** (`_ejecutar_con_llm`): el LLM selecciona llamadas a herramientas del backend mediante *tool calling*. Python valida las entradas y ejecuta las operaciones propuestas (_despachar), reutilizando la lógica del proyecto en `src/supervised`, `src/unsupervised` y el modelo MVC.
-4. **Autoevaluar**: se revisa la calidad del resultado generado, comprobando si el análisis es consistente, si la preparación es apropiada y si el rendimiento supera una línea base. En clasificación y regresión también se evalúa la estabilidad entre particiones.
-5. **Informar**: cada agente registra su bitácora (`bitacora`), genera un informe HTML (`informe_html()` / `guardar_informe()`) y recopila estadísticas de uso del LLM (`uso_llm` con turnos, llamadas y tokens).
-
-Los agentes no son un reemplazo del flujo manual, sino un apoyo inteligente para automatizar el análisis. Por ejemplo:
-
-- `AgenteEDA` sugiere limpieza, transformaciones y señales de valor para el problema de negocio o analítico.
-- `AgenteNoSupervisado` ejecuta PCA, método del codo, K-Means y HAC, y resumir los perfiles y métricas calculadas.
-- `AgenteClasificacion` y `AgenteRegresion` entrenan varios modelos, comparan familias de algoritmos y entregan un ranking con su rendimiento.
-
-Si el LLM no está disponible, falla o no logra finalizar dentro de `max_iteraciones`, el agente cae al **respaldo por reglas** (`modo == "reglas"`) y guarda la causa en `motivo_respaldo`. Así, la aplicación sigue funcionando aunque el servicio de IA no responda.
-
-> La interfaz Streamlit no expone todos los métodos de manipulación y análisis del modelo MVC descritos más abajo. Esas operaciones siguen disponibles a través de la API Python de `DataModel`; las páginas de la aplicación muestran el subconjunto implementado en cada flujo.
-
-### Pruebas
-
-Desde la raíz del proyecto, ejecute:
+La aplicación se abrirá en el navegador; **Inicio** es la página inicial. Para detenerla, presiona `Ctrl+C` en la
+terminal. Para ejecutar las pruebas, instala también las herramientas de desarrollo:
 
 ```powershell
-python -m pytest
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
 ```
 
-Los notebooks de `notebooks/` son experimentos y material heredado de desarrollo; no son el punto de entrada de la aplicación Streamlit.
+## Recorrido por la aplicación
 
-## Operaciones disponibles en el modelo MVC
+Primero carga un archivo CSV o Excel en la barra lateral, o selecciona uno de los archivos de ejemplo. El original
+se conserva durante la sesión y puedes restaurarlo después de hacer cambios.
 
-Las siguientes tablas describen operaciones expuestas por el modelo/API. No todas tienen un control equivalente en la interfaz Streamlit actual.
+| Página | Para qué sirve |
+|---|---|
+| **Inicio** | Ver el estado de la aplicación, los datos cargados y la actividad reciente. |
+| **Datos** | Revisar dimensiones, columnas, tipos y una vista previa del conjunto. |
+| **EDA** | Explorar distribuciones, relaciones y valores ausentes; obtener un resumen automático. |
+| **Preprocesamiento** | Aplicar y ordenar cambios como completar valores, escalar o transformar columnas. |
+| **Agrupamiento** | Reducir dimensiones o buscar grupos con K-Means y HAC; comparar métricas. |
+| **Clasificación** | Elegir la respuesta categórica, entrenar modelos y consultar métricas y errores por clase. |
+| **Regresión** | Elegir una respuesta numérica, probar modelos y comparar sus predicciones. |
+| **MAS** | Consultar agentes disponibles, sus mensajes y decisiones; crear y probar un agente. |
+| **Experimentos** | Consultar, comparar, descargar o eliminar ejecuciones guardadas. |
 
-### Consulta y estructura
+Los valores ausentes de los predictores supervisados se completan dentro del proceso de entrenamiento, después de
+separar los datos para prueba. Las filas sin respuesta conocida no se utilizan para entrenar.
 
-| Procedimiento | Significado |
-| --- | --- |
-| Información | Resume la cantidad de filas, columnas y sus nombres. |
-| Mostrar | Presenta el conjunto de datos cargado. |
-| Primeras filas | Muestra los primeros registros para una inspección rápida. |
-| Últimas filas | Muestra los registros finales. |
-| Obtener fila | Recupera una fila según su posición numérica. |
-| Obtener columna | Recupera una variable por su nombre. |
-| Dimensiones | Devuelve la cantidad de filas y columnas $(n, p)$. |
-| Nombres columnas | Lista las variables disponibles. |
-| Tipos de datos | Indica si cada variable es numérica, texto, fecha, etc. |
+## Asistente de IA (opcional)
 
-### Limpieza y transformación
+Los análisis automáticos funcionan con reglas locales cuando no hay una clave configurada. Para habilitar el
+proveedor Gemini, define `GEMINI_API_KEY` en la terminal antes de iniciar la aplicación:
 
-| Procedimiento | Significado |
-| --- | --- |
-| Contar nulos | Cuenta los valores ausentes por columna. |
-| Eliminar nulos | Quita las filas que contienen al menos un valor ausente. |
-| Reemplazar nulos | Sustituye los valores ausentes por el valor indicado. |
-| Imputar nulos | Completa nulos con la mediana en variables numéricas y la moda en categóricas. |
-| Detectar duplicados | Identifica registros repetidos. |
-| Eliminar duplicados | Conserva una sola copia de cada registro repetido. |
-| Convertir tipos | Cambia el tipo de una variable; en la interfaz actual convierte la columna elegida a `float64`. |
-| Normalizar | Escala cada variable numérica al intervalo $[0, 1]$. |
-| Estandarizar | Transforma variables numéricas para que tengan media $0$ y desviación estándar $1$. |
-| Agregar columna | Crea una variable nueva; en la interfaz se agrega con valor constante `1`. |
-| Eliminar columna | Borra una variable del conjunto de datos. |
-| Seleccionar variables | Devuelve un subconjunto con las columnas seleccionadas. |
-
-### Manipulación de registros
-
-| Procedimiento | Significado |
-| --- | --- |
-| Ordenar | Reordena los registros ascendentemente según la columna elegida. |
-| Filtrar | Conserva filas que cumplen una comparación: `==`, `!=`, `>`, `>=`, `<` o `<=`. |
-
-### EDA y visualización
-
-| Procedimiento | Significado |
-| --- | --- |
-| Estadísticas | Calcula conteos, media, desviación, cuartiles, mínimos y máximos; para categorías muestra frecuencia y moda. |
-| Correlación | Calcula la relación lineal entre pares de variables numéricas, con valores entre $-1$ y $1$. |
-| Visualizar datos | Muestra primeras filas, dimensiones y tipos de datos en una sola salida. |
-| Frecuencias | Cuenta cuántas veces aparece cada valor en cada columna. |
-| Distribución variables | Separa el resumen descriptivo de variables numéricas y categóricas. |
-| Histogramas | Muestran la distribución de frecuencias de variables numéricas. |
-| Boxplots | Resumen gráfico con mediana, cuartiles y posibles valores atípicos. |
-| Scatterplots | Matriz de dispersión para observar relaciones entre pares de variables numéricas. |
-| Mapa de calor | Representa visualmente la matriz de correlación. |
-| Detectar outliers | Detecta valores atípicos con el rango intercuartílico: valores fuera de $[Q_1 - 1.5IQR, Q_3 + 1.5IQR]$. |
-
-### Persistencia
-
-| Procedimiento | Significado |
-| --- | --- |
-| Guardar CSV | Guarda el estado actual de los datos en `dataframe_guardado.csv`. |
-| Exportar resultados | Exporta el estado resultante del EDA en `resultados_eda.csv`. |
-| Restaurar datos | Recupera la copia original del último CSV cargado y descarta transformaciones hechas en memoria. |
-
-### Reducción de dimensionalidad y clustering
-
-Antes de estos métodos, la aplicación codifica variables categóricas mediante *one-hot encoding* y estandariza los atributos. Esto evita que la escala de una variable domine los resultados.
-
-| Procedimiento | Significado |
-| --- | --- |
-| PCA | Análisis de Componentes Principales (ACP): crea componentes ortogonales que resumen la mayor cantidad posible de variabilidad. La API permite elegir el número de componentes. |
-| PCA (variación) | Ejecuta PCA con `whiten=True` y el solucionador aleatorizado; sirve para comparar configuraciones. |
-| HAC | Agrupamiento Jerárquico Aglomerativo: inicia con un grupo por observación y une los más similares hasta obtener el número de clústeres elegido. El enlace puede ser `ward`, `average`, `complete` o `single`. |
-| HAC Dendrograma | Árbol que muestra el orden y la distancia a la que se fusionan grupos en HAC. |
-| K-Means | Agrupa observaciones alrededor de $k$ centroides, minimizando la distancia interna de cada grupo. |
-| K-Means Codo | Grafica la inercia para varios valores de $k$; el punto donde la mejora empieza a disminuir orienta la elección de clústeres. |
-| t-SNE | Proyección no lineal que prioriza conservar vecindades locales; se utiliza principalmente para visualizar datos de muchas dimensiones. Su parámetro clave es la *perplexity*. |
-| UMAP | Proyección no lineal que preserva estructura local y parte de la global. `n_neighbors` controla el tamaño del vecindario y `min_dist` la separación mínima en la proyección. |
-
-Para HAC y K-Means se reporta el **silhouette score**, donde valores cercanos a $1$ sugieren grupos más separados. K-Means además reporta la **inercia**, suma de distancias cuadradas de cada observación a su centroide. En la interfaz Streamlit, la opción de método del codo está disponible en la página **No supervisado**.
-
-## Aprendizaje supervisado: clasificación
-
-En el aprendizaje supervisado, cada observación incluye atributos de entrada $X$ y una respuesta conocida $y$. El algoritmo aprende una función que relaciona ambos y luego la utiliza para predecir respuestas en observaciones nuevas. En clasificación, $y$ representa una categoría, como una clase binaria o una de varias clases.
-
-Para estimar la capacidad de generalización, los datos se dividen en entrenamiento y prueba. El modelo aprende con el conjunto de entrenamiento y se evalúa con el conjunto de prueba, que se reserva para medir su desempeño. En clasificación, la división estratificada procura conservar la proporción de las clases en ambos conjuntos.
-
-### Algoritmos
-
-**K vecinos más cercanos (KNN).** Clasifica una observación según las clases de sus $k$ vecinos más cercanos. La distancia, comúnmente euclidiana, determina qué observaciones se consideran cercanas; por eso, la escala de las variables numéricas puede cambiar el resultado. Un $k$ pequeño puede ser sensible al ruido, mientras que uno grande puede suavizar demasiado las diferencias entre clases.
-
-**Árbol de decisión (DT).** Divide repetidamente los datos mediante reglas sobre los atributos. En cada división busca separar las clases reduciendo una medida de impureza, como Gini o entropía. Es fácil de interpretar, pero un árbol demasiado profundo puede ajustarse demasiado a los datos de entrenamiento.
-
-**Random Forest (RF).** Entrena varios árboles sobre muestras aleatorias del conjunto de entrenamiento y subconjuntos de atributos. Para clasificar, combina sus votos. Esta combinación suele reducir la variabilidad de un árbol individual, aunque hace menos directa la interpretación del resultado.
-
-**AdaBoost.** Entrena una secuencia de clasificadores débiles. En cada iteración aumenta la atención sobre las observaciones que los clasificadores anteriores confundieron, y al final combina sus predicciones con pesos. Puede ser sensible a observaciones atípicas o etiquetas incorrectas.
-
-**XGBoost.** Implementa árboles de *gradient boosting*: agrega árboles secuencialmente para corregir errores de la combinación actual. Optimiza una función objetivo que incorpora tanto la pérdida de predicción como regularización, con el fin de controlar la complejidad del modelo. Es distinto de `GradientBoostingClassifier` de scikit-learn, que también está disponible en este paquete como método adicional.
-
-### Flujo de clasificación implementado
-
-La clase `ClasificacionModelos` hereda de `SupervisadoBase`. Se construye con un DataFrame y el nombre de la columna objetivo. El parámetro `test_size` controla la proporción reservada para prueba; por defecto es $0.25$, y la división es reproducible mediante `random_state`. La interfaz Streamlit permite configurar `test_size` y seleccionar la variable objetivo.
-
-La preparación de predictores forma parte de un `Pipeline` para aprender las transformaciones únicamente con los datos de entrenamiento. Las columnas numéricas reciben imputación por mediana y, si se solicita, estandarización. Las categóricas reciben imputación por moda y codificación *one-hot*. Las columnas predictoras pueden limitarse con `feature_columns`; los registros sin respuesta objetivo se rechazan.
-
-Los métodos disponibles son `knn`, `decision_tree`, `random_forest`, `gradient_boosting`, `adaboost` y `xgboost`. Cada método permite configurar algunos hiperparámetros y devuelve el pipeline entrenado junto con sus métricas. XGBoost codifica internamente las etiquetas de texto y las devuelve en su forma original al predecir.
-
-Las métricas de clasificación incluyen *accuracy*, precisión, *recall* y F1 macro, matriz de confusión y reporte por clase. El promedio macro otorga el mismo peso a cada clase, lo que resulta útil cuando las clases tienen tamaños distintos.
-
-### Experimentación de clasificación
-
-`comparar_basico()` ejecuta una configuración predeterminada de cada algoritmo principal. También se pueden cambiar los hiperparámetros al llamar cada método; por ejemplo, `knn(n_neighbors=3)` o `random_forest(n_estimators=100, max_depth=8)`. `adaboost_grid()` prueba combinaciones de parámetros mediante validación cruzada sobre los datos de entrenamiento y evalúa la mejor configuración en el conjunto de prueba.
-
-Para comparar configuraciones, conviene mantener la misma división de datos y observar las métricas en conjunto, especialmente F1 macro y la matriz de confusión. La configuración con mejor resultado debe seleccionarse usando validación cruzada y evaluarse al final con el conjunto de prueba reservado. La clase ofrece búsqueda automatizada de hiperparámetros para AdaBoost; para los demás algoritmos, las variantes se ejecutan pasando sus parámetros a los métodos y sus resultados se comparan. La selección final y el análisis deben considerar también los errores por clase, no solo una métrica global.
-
-La API puede utilizarse desde Python:
-
-```python
-from supervised import ClasificacionModelos
-
-clasificador = ClasificacionModelos(
-	df,
-	target="columna_objetivo",
-	test_size=0.25,
-	random_state=42,
-)
-resultado = clasificador.knn(n_neighbors=5)
-print(resultado["metricas"])
+```powershell
+$env:GEMINI_API_KEY = "tu_clave"
+python -m streamlit run app.py
 ```
 
-La página de predicción está reservada para desarrollar regresión más adelante; actualmente no hay algoritmos de regresión implementados.
+No escribas la clave en archivos del proyecto, capturas ni commits. El proveedor externo puede aplicar sus propias
+condiciones y límites de uso.
 
-### Métricas de los métodos no supervisados
+## Datos de ejemplo
 
-Los métodos no supervisados devuelven métricas para ayudar a interpretar sus resultados.
+`data/` incluye archivos para clasificación, agrupamiento y pruebas, además de `regression_sample.csv`, que se
+genera de forma sintética. Las fuentes y licencias de los CSV heredados no están documentadas; confirma sus
+condiciones antes de redistribuirlos. Consulta [la guía de datos](data/README.md).
 
-| Técnica | Mensaje en consola | Interpretación simple |
-| --- | --- | --- |
-| PCA | `PCA - Varianza explicada acumulada: X%` | Indica cuánta información de los datos conservan las componentes calculadas. Un porcentaje más alto es mejor; como referencia, superar $70\%$ suele ser una representación razonable. |
-| HAC | `HAC - Correlación cofenética: X` | Mide qué tan bien el dendrograma conserva las distancias originales entre observaciones. Va aproximadamente de $0$ a $1$; valores cercanos a $1$ son mejores. |
-| K-Means | `K-Means - Silhouette score: X` | Mide si los grupos están compactos y separados. Va de $-1$ a $1$; cercano a $1$ es bueno, cercano a $0$ indica grupos mezclados y negativo es desfavorable. |
-| t-SNE | `t-SNE - Trustworthiness: X` | Indica si los vecinos cercanos de los datos originales continúan cerca en el plano proyectado. Va de $0$ a $1$; valores cercanos a $1$ son mejores. |
-| UMAP | `UMAP - Trustworthiness: X` | Mide la conservación de vecinos al reducir los datos. Va de $0$ a $1$; valores cercanos a $1$ son mejores. |
+## Experimentos e informe
 
-Las funciones también devuelven el modelo o resultado. En PCA y clustering se retorna un diccionario con el modelo y la métrica; en t-SNE y UMAP, el `DataFrame` del embedding conserva el modelo y `trustworthiness` en `resultado.attrs`.
+Para repetir los benchmarks y generar las tablas, el manifiesto y las cuatro figuras:
 
-## Estructura del proyecto
+```powershell
+python scripts/run_experiments.py
+```
+
+Para compilar el [informe técnico en PDF](docs/technical_report.pdf), con resultados y bibliografía:
+
+```powershell
+.\scripts\build_report.ps1
+```
+
+La metodología y los archivos generados se explican en [docs/resultados/README.md](docs/resultados/README.md).
+La compilación del PDF requiere la herramienta TeX indicada en Requisitos.
+
+## Pruebas y evidencias
+
+```powershell
+python -m pytest -q
+.\scripts\run_tests_report.ps1
+```
+
+El segundo comando guarda la salida de pruebas y cobertura en [docs/evidencias/](docs/evidencias/README.md).
+La cobertura se ejecuta con `pytest-cov`. Las capturas visuales de la interfaz son manuales y sus pasos están en
+[docs/evidencias/CAPTURAS.md](docs/evidencias/CAPTURAS.md).
+
+## Estructura principal
 
 ```text
-app.py
-Lab1_Documentation.pdf
-Lab_2_Classification.pdf
-TEAM_MEMBERS.txt
-pages/
-	_shared.py
-	unsupervised.py
-	classification.py
-	prediction.py
-data/
-	Archivos CSV de entrada
-notebooks/
-		Classification_Experiments.ipynb
-		Unsupervised_Experiments.ipynb
-		MVC_Tests.ipynb
-		Version3_MVC.ipynb
-	src/
-		controller.py
-		model.py
-		view.py
-		EDA/
-			__init__.py
-			dataframe.py
-		supervised/
-			__init__.py
-			supervised_base.py
-			Classification/
-				__init__.py
-				Classification.py
-			Regression/
-				__init__.py
-				Regression.py
-		unsupervised/
-			__init__.py
-			unsupervised_base.py
-			clustering.py
-			pca.py
-tests/
-	test_mvc.py
-requirements.txt
+app.py                  Entrada de Streamlit
+frontend/               Páginas y componentes de la interfaz
+framework_ia/            Controlador, análisis, agentes y servicios
+data/                    Datos de ejemplo
+scripts/                 Pruebas reproducibles, informe y empaquetado
+tests/                   Pruebas automatizadas
+docs/                    Informe, resultados y evidencias
 ```
