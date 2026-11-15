@@ -1,15 +1,24 @@
-import hashlib
-import io
+"""Estado compartido entre páginas: controlador por sesión, carga de datos en la barra lateral y mensajes.
 
-import pandas as pd
+Las páginas **solo** hablan con :class:`framework_ia.controller.FrameworkController`; este módulo crea una
+instancia por sesión de Streamlit (la agencia rehidrata los agentes persistidos al arrancar).
+"""
+from __future__ import annotations
+
+import hashlib
+from typing import Any, Callable
+
 import streamlit as st
 
-from framework_ia.ml import DataModel
+from framework_ia.controller import FrameworkController
+from framework_ia.services.dataset_service import SOURCES, DatasetService
+from framework_ia.utils.exceptions import friendly_message
 
 CLAVES_RESULTADOS = (
     "clf_particiones",
     "clf_resultados",
     "clf_comparacion",
+    "clf_benchmark",
     "exp_seleccionado",
     "reg_particiones",
     "reg_resultados",
@@ -17,147 +26,123 @@ CLAVES_RESULTADOS = (
     "reg_exp_seleccionado",
     "agente_no_supervisado",
     "no_supervisado_archivo_hash",
+    "agrupamiento_benchmark",
     "agente_clasificacion",
     "agente_regresion",
 )
 
 
-def limpiar_resultados():
+def obtener_controlador() -> FrameworkController:
+    """Controlador de la sesión (se crea una sola vez)."""
+    if "controller" not in st.session_state:
+        st.session_state["controller"] = FrameworkController()
+    return st.session_state["controller"]
+
+
+def limpiar_resultados() -> None:
     """Descarta particiones y modelos entrenados cuando cambian los datos."""
     for clave in CLAVES_RESULTADOS:
         st.session_state.pop(clave, None)
 
 
-def limpiar_estado_eda():
-    """Descarta el resultado del EDA y el conjunto derivado del archivo anterior."""
-    for clave in (
-        "agente_eda",
-        "agente_eda_html",
-        "eda_archivo_hash",
-        "eda_objetivo",
-        "modelo_eda",
-        "modelo_manual",
-    ):
+def limpiar_estado_eda() -> None:
+    """Descarta el estado de la página EDA ligado al archivo anterior."""
+    for clave in ("eda_objetivo", "eda_mensaje"):
         st.session_state.pop(clave, None)
 
 
-def seleccionar_modelo_activo(
-    fuente,
-    modelo_original,
-    modelo_manual,
-    modelo_eda,
-    archivo_hash,
-    eda_archivo_hash,
-):
-    """Selecciona los datos activos sin perder la copia del CSV cargado."""
-    if (
-        fuente == "agente"
-        and modelo_eda is not None
-        and archivo_hash is not None
-        and eda_archivo_hash == archivo_hash
-    ):
-        return modelo_eda
-    if fuente in ("original", "manual") and modelo_manual is not None:
-        return modelo_manual
-    return modelo_original
+def seleccionar_modelo_activo(fuente, modelo_original, modelo_manual, modelo_eda, archivo_hash, eda_archivo_hash):
+    """Selecciona los datos activos sin perder la copia del archivo cargado (regla del backend)."""
+    return DatasetService.select_active(fuente, modelo_original, modelo_manual, modelo_eda,
+                                        archivo_hash, eda_archivo_hash)
 
 
-def restaurar_csv_original():
-    """Activa una copia limpia del CSV cargado, preservando el modelo canónico."""
-    modelo_original = st.session_state.get("model")
-    if modelo_original is None:
-        raise RuntimeError("No hay un CSV cargado para restaurar.")
-
-    modelo_manual = DataModel()
-    modelo_manual.cargar_dataframe(modelo_original.dataframe.dataframe)
-    st.session_state["modelo_manual"] = modelo_manual
-    st.session_state["modo_datos_activos"] = "original"
+def restaurar_csv_original() -> None:
+    """Activa una copia limpia del archivo cargado."""
+    obtener_controlador().restore_dataset()
     limpiar_resultados()
 
 
-def obtener_modelo(recomendar_eda=False):
-    if "model" not in st.session_state:
-        st.session_state.model = DataModel()
-        st.session_state.archivo_nombre = None
-    st.session_state.setdefault("archivo_hash", None)
+def mostrar_error(error: BaseException, prefijo: str = "") -> None:
+    """Muestra un error amigable (nunca un traceback)."""
+    st.error(f"{prefijo}{friendly_message(error)}")
 
-    archivo = st.sidebar.file_uploader("Cargar CSV", type=["csv"])
-    archivo_actualizado = False
 
-    if archivo is not None:
-        contenido = archivo.getvalue()
-        archivo_hash = hashlib.sha256(contenido).hexdigest()
-    else:
-        contenido = None
-        archivo_hash = None
-
-    if archivo is not None and archivo_hash != st.session_state.archivo_hash:
-        try:
-            df = pd.read_csv(io.BytesIO(contenido))
-        except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as error:
-            st.sidebar.error(f"No se pudo leer el CSV: {error}")
-            return None
-
-        st.session_state.model.cargar_dataframe(df)
-        st.session_state.archivo_nombre = archivo.name
-        st.session_state.archivo_hash = archivo_hash
-        archivo_actualizado = True
-        limpiar_resultados()
-        limpiar_estado_eda()
-        modelo_manual = DataModel()
-        modelo_manual.cargar_dataframe(df)
-        st.session_state["modelo_manual"] = modelo_manual
-        st.session_state["modo_datos_activos"] = "original"
-
-    if "modelo_manual" not in st.session_state and st.session_state.model.dimensiones()[0] > 0:
-        modelo_manual = DataModel()
-        modelo_manual.cargar_dataframe(st.session_state.model.dataframe.dataframe)
-        st.session_state["modelo_manual"] = modelo_manual
-
-    model = seleccionar_modelo_activo(
-        st.session_state.get("modo_datos_activos", "original"),
-        st.session_state.model,
-        st.session_state.get("modelo_manual"),
-        st.session_state.get("modelo_eda"),
-        st.session_state.get("archivo_hash"),
-        st.session_state.get("eda_archivo_hash"),
-    )
-    filas, columnas = model.dimensiones()
-
-    with st.sidebar:
-        if filas > 0:
-            nombre_archivo = st.session_state.archivo_nombre or "Archivo cargado"
-            if archivo_actualizado:
-                st.success(f"CSV actualizado: {nombre_archivo}")
-            else:
-                st.success(nombre_archivo)
-            col1, col2 = st.columns(2)
-            col1.metric("Filas", filas)
-            col2.metric("Columnas", columnas)
-            fuente = st.session_state.get("modo_datos_activos", "original")
-            etiquetas_fuente = {
-                "original": "CSV original",
-                "manual": "Cambios manuales",
-                "agente": "Preparación del agente EDA",
-            }
-            st.caption(f"Datos activos: {etiquetas_fuente.get(fuente, 'CSV original')}")
-        else:
-            st.info("Sube un CSV para comenzar.")
-
-    if filas == 0:
+def ejecutar(funcion: Callable[[], Any], spinner: str = "Procesando...", prefijo: str = "") -> Any:
+    """Ejecuta una llamada al controlador mostrando un spinner y un error amigable si falla."""
+    try:
+        with st.spinner(spinner):
+            return funcion()
+    except Exception as error:  # el usuario solo ve el mensaje
+        mostrar_error(error, prefijo)
         return None
 
-    if recomendar_eda and st.session_state.get("modo_datos_activos", "original") != "agente":
-        if st.session_state.get("modo_datos_activos") == "manual":
-            st.info(
-                "Se usarán tus cambios manuales. Si quieres recomendaciones automáticas, "
-                "puedes ejecutar el agente EDA."
-            )
-        else:
-            st.info(
-                "Puedes revisar los datos y ejecutar el agente EDA para recibir recomendaciones; "
-                "también puedes continuar directamente con el CSV original."
-            )
-        st.page_link("frontend/pages/eda.py", label="Revisar el EDA (opcional)", icon=":material/smart_toy:")
 
-    return model
+def pie_de_ejecucion(resultado: dict[str, Any] | None) -> None:
+    """Indica qué agente atendió la tarea y con qué capacidad (trazabilidad del MAS)."""
+    if not resultado:
+        return
+    texto = (f"Atendido por **{resultado.get('selected_agent')}** · capacidad `{resultado.get('capability')}` · "
+             f"política `{resultado.get('policy')}`")
+    if resultado.get("run_id"):
+        texto += f" · experimento `{resultado['run_id']}`"
+    st.caption(texto)
+
+
+def _cargar_desde_barra_lateral(controlador: FrameworkController) -> bool:
+    archivo = st.sidebar.file_uploader("Cargar datos (CSV o Excel)", type=["csv", "xlsx", "xls"])
+    if archivo is None:
+        return False
+    contenido = archivo.getvalue()
+    huella = hashlib.sha256(contenido).hexdigest()
+    if st.session_state.get("ultimo_archivo_subido") == huella:
+        return False
+    st.session_state["ultimo_archivo_subido"] = huella
+    try:
+        controlador.load_dataset(contenido, archivo.name)
+    except Exception as error:
+        st.sidebar.error(f"No se pudo cargar el archivo: {friendly_message(error)}")
+        return False
+    limpiar_resultados()
+    limpiar_estado_eda()
+    return True
+
+
+def estado_barra_lateral(controlador: FrameworkController, actualizado: bool = False) -> None:
+    """Resumen del dataset activo en la barra lateral."""
+    with st.sidebar:
+        if not controlador.has_data:
+            st.info("Cargue un archivo aquí o en la página **Datos** para comenzar.")
+            return
+        info = controlador.dataset_info()
+        (st.success if actualizado else st.caption)(f"Archivo: {info['name']}")
+        c1, c2 = st.columns(2)
+        c1.metric("Filas", info["rows"])
+        c2.metric("Columnas", info["columns"])
+        st.caption(f"Datos activos: {SOURCES.get(info['source'], info['source'])}")
+
+
+def obtener_datos(recomendar_eda: bool = False) -> FrameworkController | None:
+    """Barra lateral de carga y estado; devuelve el controlador si hay datos activos."""
+    controlador = obtener_controlador()
+    actualizado = _cargar_desde_barra_lateral(controlador)
+    estado_barra_lateral(controlador, actualizado)
+    if not controlador.has_data:
+        return None
+    fuente = controlador.dataset_info()["source"]
+    if recomendar_eda and fuente != "agente":
+        if fuente in ("manual", "preprocesado"):
+            st.info("Se usarán sus cambios de limpieza/preprocesamiento. Si quiere recomendaciones automáticas, "
+                    "puede ejecutar el agente EDA.")
+        else:
+            st.info("Puede revisar los datos y ejecutar el agente EDA para recibir recomendaciones; "
+                    "también puede continuar directamente con el archivo original.")
+        try:
+            st.page_link("frontend/pages/eda.py", label="Revisar el EDA (opcional)", icon=":material/smart_toy:")
+        except Exception:  # la página se ejecuta fuera de st.navigation (por ejemplo, en pruebas)
+            pass
+    return controlador
+
+
+# Compatibilidad con el nombre usado por las páginas de los laboratorios.
+obtener_modelo = obtener_datos

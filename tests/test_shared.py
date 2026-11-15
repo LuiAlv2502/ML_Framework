@@ -62,16 +62,15 @@ def test_seleccionar_modelo_agente_usa_preparacion_vigente():
     assert activo is agente
 
 
-def test_restaurar_csv_original_reemplaza_cambios_manuales(monkeypatch):
-    original = _modelo({"x": [1, 2]})
-    monkeypatch.setattr(
-        _shared.st,
-        "session_state",
-        {"model": original, "modelo_manual": _modelo({"x": [9]}), "modo_datos_activos": "manual"},
-    )
+def test_restaurar_csv_original_reemplaza_cambios_manuales(monkeypatch, tmp_path):
+    from framework_ia.controller import FrameworkController
+
+    controlador = FrameworkController(persist=False, runs_dir=tmp_path)
+    controlador.load_dataframe(pd.DataFrame({"x": [1, 2]}), "datos.csv")
+    controlador.datasets.set_active(pd.DataFrame({"x": [9]}), "manual")
+    monkeypatch.setattr(_shared.st, "session_state", {"controller": controlador})
 
     _shared.restaurar_csv_original()
 
-    assert _shared.st.session_state["modo_datos_activos"] == "original"
-    assert _shared.st.session_state["modelo_manual"].dataframe.dataframe["x"].tolist() == [1, 2]
-    assert original.dataframe.dataframe["x"].tolist() == [1, 2]
+    assert controlador.dataset_info()["source"] == "original"
+    assert controlador.active_data()["x"].tolist() == [1, 2]

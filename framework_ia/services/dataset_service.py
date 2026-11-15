@@ -244,6 +244,21 @@ class DatasetService:
             "correlation": modelo.correlacion() if len(numericas) >= 2 else pd.DataFrame(),
         }
 
+    def target_summary(self, target: Any) -> dict[str, Any]:
+        """Mínimo, cuartiles, máximo y media de una variable numérica (referencia para interpretar errores)."""
+        datos = self.active
+        if target not in datos.columns:
+            raise ValidationError(f"La columna '{target}' no existe.")
+        if not pd.api.types.is_numeric_dtype(datos[target]):
+            raise ValidationError(f"'{target}' no es numérica.")
+        y = datos[target].dropna()
+        return {
+            "Mínimo": float(y.min()),
+            "Cuartiles": [float(q) for q in y.quantile([0.25, 0.5, 0.75])],
+            "Máximo": float(y.max()),
+            "Media": float(y.mean()),
+        }
+
     def suggest_target(self) -> Any:
         """Sugiere como objetivo la última columna que no parezca identificador."""
         datos = self.active
