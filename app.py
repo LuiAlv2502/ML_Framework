@@ -1,46 +1,4 @@
-import sys
-from pathlib import Path
+"""Punto de entrada de la aplicación: ``streamlit run app.py``."""
+from frontend.dashboard import main
 
-import streamlit as st
-
-sys.path.append(str(Path(__file__).parent / "src"))
-
-from pages._theme import aplicar_estilo  # noqa: E402
-
-st.set_page_config(
-    page_title="Laboratorio IA",
-    layout="wide",
-)
-aplicar_estilo()
-
-pg = st.navigation(
-    [
-        st.Page(
-            "pages/eda.py",
-            title="EDA",
-            icon=":material/smart_toy:",
-            default=True,
-        ),
-        st.Page(
-            "pages/unsupervised.py",
-            title="No supervisado",
-            icon=":material/scatter_plot:",
-        ),
-        st.Page(
-            "pages/classification.py",
-            title="Supervisado - Clasificación",
-            icon=":material/category:",
-        ),
-        st.Page(
-            "pages/prediction.py",
-            title="Supervisado - Predicción",
-            icon=":material/trending_up:",
-        ),
-    ]
-)
-
-with st.sidebar:
-    st.markdown("### Laboratorio IA")
-    st.caption("Análisis de datos con MVC + Streamlit · Night City edition")
-
-pg.run()
+main()

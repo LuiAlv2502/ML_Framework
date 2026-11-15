@@ -1,13 +1,11 @@
 from pathlib import Path
-import sys
 from types import SimpleNamespace as NS
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
-from agents import llm
+from framework_ia.agents import llm
 
 
 class _RateLimitError(Exception):

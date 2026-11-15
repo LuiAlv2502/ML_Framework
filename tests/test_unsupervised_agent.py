@@ -1,15 +1,13 @@
 from pathlib import Path
 import json
-import sys
 from types import SimpleNamespace as NS
 
 import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
-from agents import AgenteNoSupervisado
+from framework_ia.agents import AgenteNoSupervisado
 
 
 def _tool_call(nombre, argumentos, call_id):

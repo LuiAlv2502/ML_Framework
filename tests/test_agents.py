@@ -1,15 +1,13 @@
 from pathlib import Path
 import json
-import sys
 
 import numpy as np
 import pandas as pd
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
-from agents import AgenteEDA
+from framework_ia.agents import AgenteEDA
 
 
 def _ejecutar(df, objetivo=None):

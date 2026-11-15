@@ -1,13 +1,11 @@
 from pathlib import Path
-import sys
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
-from model import DataModel
-from pages import _shared
+from framework_ia.ml import DataModel
+from frontend.components import shared as _shared
 
 
 def _modelo(datos):

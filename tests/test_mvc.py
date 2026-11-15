@@ -1,19 +1,17 @@
 from pathlib import Path
-import sys
 
 import numpy as np
 import pandas as pd
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
-from EDA.dataframe import DataFrame
-from model import DataModel
-from supervised import ClasificacionModelos
-from unsupervised.unsupervised_base import UnsupervisedBase
-from unsupervised.clustering import ClusteringAnalysis
-from unsupervised.pca import PCAAnalysis
+from framework_ia.ml.eda.dataframe import DataFrame
+from framework_ia.ml import DataModel
+from framework_ia.ml import ClasificacionModelos
+from framework_ia.ml.clustering.unsupervised_base import UnsupervisedBase
+from framework_ia.ml.clustering.clustering import ClusteringAnalysis
+from framework_ia.ml.clustering.pca import PCAAnalysis
 
 
 DATASET = ROOT / "data" / "drug200.csv"

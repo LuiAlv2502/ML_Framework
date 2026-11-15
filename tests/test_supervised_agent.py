@@ -1,15 +1,13 @@
 from pathlib import Path
 import json
-import sys
 from types import SimpleNamespace as NS
 
 import pandas as pd
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
-from agents import AgenteClasificacion, AgenteRegresion, AgenteSupervisado
+from framework_ia.agents import AgenteClasificacion, AgenteRegresion, AgenteSupervisado
 
 
 def _tool_call(nombre, argumentos, call_id):
