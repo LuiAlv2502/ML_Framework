@@ -1,0 +1,165 @@
+{
+  "python": "3.13.7",
+  "random_seeds": [
+    42,
+    43,
+    44
+  ],
+  "test_size": 0.25,
+  "benchmark_seed": 42,
+  "datasets": {
+    "classification": {
+      "file": "data/drug200.csv",
+      "sha256": "10caebf3b055e149ef1e7494042031e510b47ba644f3c304bbb86c428fe89b66",
+      "rows": 200,
+      "target": "Drug"
+    },
+    "regression": {
+      "file": "data/regression_sample.csv",
+      "sha256": "607dba24c777bdb095b8cb4a7aeeb373d484113824f64ea8997ac24574e2e7ba",
+      "rows": 300,
+      "target": "ingreso_anual"
+    },
+    "clustering": {
+      "file": "data/Mall_Customers.csv",
+      "sha256": "416a4f62a8f33841a16e1db5297f0e05d3b65b05e73632cedae58e739e1e1f77",
+      "rows": 200,
+      "features": [
+        "Annual Income (k$)",
+        "Spending Score (1-100)"
+      ]
+    }
+  },
+  "selected_models": {
+    "classification_benchmark": {
+      "model": "Árbol (estándar)",
+      "f1_macro": 0.9877446808510637
+    },
+    "classification_evaluation": {
+      "model": "Random Forest (200 árboles)",
+      "metrics_by_seed": [
+        {
+          "semilla": 42,
+          "accuracy": 0.98,
+          "precision_macro": 0.9916666666666668,
+          "recall_macro": 0.9846153846153847,
+          "f1_macro": 0.9877446808510637
+        },
+        {
+          "semilla": 43,
+          "accuracy": 0.98,
+          "precision_macro": 0.9916666666666668,
+          "recall_macro": 0.9846153846153847,
+          "f1_macro": 0.9877446808510637
+        },
+        {
+          "semilla": 44,
+          "accuracy": 1.0,
+          "precision_macro": 1.0,
+          "recall_macro": 1.0,
+          "f1_macro": 1.0
+        }
+      ],
+      "confusion_matrix_seed_42": {
+        "labels": [
+          "DrugY",
+          "drugA",
+          "drugB",
+          "drugC",
+          "drugX"
+        ],
+        "matrix": [
+          [
+            23,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            6,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            4,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            12
+          ]
+        ]
+      }
+    },
+    "regression_benchmark": {
+      "model": "Regresión lineal múltiple (estándar)",
+      "rmse": 4512.958739697915
+    },
+    "regression_evaluation": {
+      "model": "RidgeCV",
+      "metrics_by_seed": [
+        {
+          "semilla": 42,
+          "RMSE": 4517.242711054891,
+          "MAE": 3812.17237553486,
+          "ER": 0.041777170041134196,
+          "R2": 0.95167136159115
+        },
+        {
+          "semilla": 43,
+          "RMSE": 4776.792084157877,
+          "MAE": 3916.2935737589173,
+          "ER": 0.04233330744261473,
+          "R2": 0.9557410780381997
+        },
+        {
+          "semilla": 44,
+          "RMSE": 5820.681084655997,
+          "MAE": 4784.809330013138,
+          "ER": 0.05234855702933697,
+          "R2": 0.9262112069508919
+        }
+      ],
+      "alphas": [
+        0.01,
+        0.1,
+        1.0,
+        10.0,
+        100.0
+      ]
+    },
+    "clustering_benchmark": {
+      "configuration": "K-Means k=4",
+      "silhouette": 0.4939069237513199
+    },
+    "clustering_visualization": {
+      "model": "K-Means k=3",
+      "silhouette": 0.46658474419000145,
+      "projection_variance": [
+        0.5049514240470188,
+        0.4950485759529812
+      ],
+      "group_sizes": {
+        "0": 38,
+        "1": 39,
+        "2": 123
+      }
+    }
+  }
+}

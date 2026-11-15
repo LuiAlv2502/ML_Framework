@@ -3,96 +3,139 @@
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{enumitem}
+\usepackage[numbers]{natbib}
 
-\title{Framework IA para análisis de datos}
+\graphicspath{{resultados/figures/}}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\title{Framework IA para análisis de datos\\\large Informe técnico y resultados reproducibles}
 \author{Laboratorio de análisis de datos}
 \date{Noviembre de 2026}
 
 \begin{document}
 \maketitle
+\begin{abstract}
+Se presenta una aplicación local para explorar y preparar conjuntos de datos y ejecutar análisis de agrupamiento,
+clasificación y regresión. El sistema combina una interfaz Streamlit, un controlador, servicios reutilizables y
+agentes especializados. Se describen tres experimentos reproducibles con semillas fijas y sin servicio externo de
+IA: clasificación de medicamentos, predicción de un ingreso sintético y segmentación de clientes. Los resultados
+se generan con el mismo flujo de trabajo de la aplicación y se acompañan de tablas y cuatro figuras.
+\end{abstract}
 \tableofcontents
 \newpage
 
-\section{Resumen}
-Este proyecto proporciona una aplicación local para explorar datos, prepararlos y ejecutar análisis de
-agrupamiento, clasificación y regresión. La interfaz se implementa en Streamlit y utiliza
-\texttt{FrameworkController} como entrada al backend. El framework incluye servicios de datos, persistencia de
-experimentos y un sistema multiagente con coordinador, agentes especializados, fábrica y mensajería.
+\section{Objetivo y arquitectura}
+El objetivo es ofrecer una interfaz local para cargar datos, explorar variables, preparar información y ejecutar
+algoritmos de aprendizaje automático. El dashboard de Streamlit utiliza \texttt{FrameworkController} como entrada
+única al backend. El controlador valida solicitudes, coordina servicios y agentes, y registra cada ejecución.
 
-\section{Arquitectura}
-El código se organiza en capas:
+El proyecto se organiza en capas; la interfaz se construye con Streamlit \citep{streamlitdocs}:
 \begin{itemize}[nosep]
-  \item \texttt{frontend/}: dashboard y páginas Streamlit.
+  \item \texttt{frontend/}: navegación, páginas y componentes de Streamlit.
   \item \texttt{framework\_ia/controller.py}: coordinación entre interfaz y backend.
   \item \texttt{framework\_ia/services/}: carga, transformación y registro de ejecuciones.
-  \item \texttt{framework\_ia/ml/}: operaciones de EDA, preprocesamiento y algoritmos de aprendizaje.
-  \item \texttt{framework\_ia/agents/}: agentes, agencia, coordinador, fábrica y mensajería.
-  \item \texttt{framework\_ia/persistence/}: almacenamiento de ejecuciones, configuración, modelos y agentes.
-  \item \texttt{framework\_ia/utils/}: validación, métricas, serialización, errores y logging.
+  \item \texttt{framework\_ia/ml/}: EDA, preprocesamiento y algoritmos de aprendizaje.
+  \item \texttt{framework\_ia/agents/}: coordinador y agentes especializados.
+  \item \texttt{framework\_ia/persistence/}: almacenamiento local de experimentos y configuración.
 \end{itemize}
-La interfaz no importa directamente clases de algoritmos o agentes. El controlador valida solicitudes, utiliza los
-servicios y enruta las tareas a través del coordinador. Los resultados se guardan en \texttt{runs/}.
+Los algoritmos y transformaciones se implementan con bibliotecas científicas de Python \citep{pedregosa2011scikit}.
+Para los experimentos de este informe se desactivó el servicio externo de IA; por tanto, no se requieren claves ni
+conexión a un proveedor para reproducir los resultados.
 
-\section{Flujo de datos}
-Los archivos se cargan localmente como CSV o Excel. \texttt{DatasetService} mantiene una copia original y una copia
-activa; las operaciones manuales y automáticas se aplican sobre la copia activa, que se puede restaurar. La carga
-valida formatos y límites configurados. Los pipelines supervisados ajustan imputación, codificación y escalado con
-los datos de entrenamiento, para evitar aprender esas transformaciones del conjunto de prueba.
+\section{Datos y diseño experimental}
+\subsection{Clasificación}
+Se utiliza \texttt{data/drug200.csv} (200 filas), con \texttt{Drug} como etiqueta y el catálogo de clasificadores
+del proyecto para comparar configuraciones. El benchmark conserva la misma partición estratificada de 75\,\% para
+entrenamiento y 25\,\% para prueba, con semilla 42. Para observar la variación por partición se evalúa además un
+Random Forest de 200 árboles con las semillas 42, 43 y 44. La matriz de confusión del informe corresponde a la
+semilla 42.
 
-\section{Aprendizaje automático}
-El sistema reúne EDA y preprocesamiento reutilizables, reducción dimensional, agrupamiento, clasificación y
-regresión. Las tareas pueden ejecutarse manualmente o mediante el agente especializado. Los benchmarks del backend
-registran configuración y métricas para que sus resultados puedan consultarse y compararse desde la página
-\textbf{Experimentos}. Las métricas se interpretan según la tarea; por ejemplo, F1 macro para clasificación y RMSE
-para regresión.
+\subsection{Regresión}
+Se utiliza \texttt{data/regression\_sample.csv} (300 filas), generado mediante
+\texttt{scripts/generate\_regression\_sample.py}. El objetivo, \texttt{ingreso\_anual}, se construye a partir de
+experiencia, nivel educativo, horas semanales, proyectos y departamento, más ruido aleatorio. No representa
+ingresos observados ni personas reales. Se comparan las configuraciones del catálogo con una partición de 75/25 y
+semilla 42. RidgeCV se evalúa adicionalmente con cinco valores de regularización y las semillas 42, 43 y 44.
 
-\section{Sistema multiagente}
-\texttt{BaseAgent} define identidad, capacidades, configuración, estado y estadísticas. \texttt{AgentRegistry}
-mantiene la lista de agentes disponibles; \texttt{AgentFactory} valida y crea tipos registrados o plugins.
-\texttt{Agency} gestiona ciclo de vida, asignación, reintentos y colaboración. \texttt{CoordinatorAgent} selecciona
-agentes compatibles y consolida respuestas. El bus transmite solicitudes y respuestas con identificadores de
-correlación.
+\subsection{Agrupamiento}
+Se utiliza \texttt{data/Mall\_Customers.csv} (200 filas), y se limitan las variables de entrada a
+\texttt{Annual Income} (ingreso anual, k\$) y \texttt{Spending Score} (puntuación de gasto, 1--100) para no usar
+identificadores ni atributos ajenos a la segmentación elegida. Las variables se estandarizan antes de aplicar
+K-Means \citep{macqueen1967some} y HAC. Se comparan K-Means con $k=2,3,4$, HAC con enlace Ward y dos
+configuraciones de PCA. El coeficiente silhouette se interpreta como una
+medida de cohesión y separación entre grupos \citep{rousseeuw1987silhouettes}. La figura de segmentos muestra
+K-Means con $k=3$ y una proyección a componentes principales.
 
-Los agentes especializados cubren EDA, agrupamiento, clasificación y regresión. Si se configura el proveedor de
-IA, el agente puede usarlo para proponer decisiones; de lo contrario, existen flujos basados en reglas para las
-tareas compatibles. Las capacidades y entradas se validan en Python antes de ejecutar algoritmos.
+\subsection{Reproducibilidad}
+El script \texttt{scripts/run\_experiments.py} fija las semillas, desactiva el servicio de IA, crea las ejecuciones
+en una carpeta temporal y genera las tablas CSV, el manifiesto JSON, la tabla LaTeX y las figuras. Los benchmarks
+supervisados comparan configuraciones sobre una misma partición; sus resultados son comparables dentro de cada
+tarea, no entre conjuntos distintos. La ejecución multi-semilla se reporta aparte para hacer explícita la
+variabilidad observada.
 
-\section{Persistencia y privacidad}
-Cada ejecución se guarda bajo \texttt{runs/<id>/}, con un resumen JSON, métricas CSV y mensajes JSONL. La página de
-experimentos permite filtrar, consultar, comparar, descargar y eliminar registros. El estado de agentes y modelos
-se guarda en las rutas locales configuradas.
+\section{Resultados}
+La tabla se genera directamente desde la salida del script, por lo que sus valores corresponden a los CSV y al
+manifiesto distribuidos con este informe.
+\begin{center}
+\input{resultados/resultados_tabla.tex}
+\end{center}
 
-Los agentes de lenguaje reciben perfiles agregados y resultados resumidos, no filas completas del conjunto. El servicio
-de IA configurado puede estar sujeto a sus propias condiciones; no se deben incluir claves en el repositorio. La
-procedencia y licencia de los CSV preexistentes no está documentada, por lo que deben verificarse antes de
-redistribuirlos. El conjunto de regresión de ejemplo se genera sintéticamente con
-\texttt{scripts/generate\_regression\_sample.py}.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{01_matriz_confusion.png}
+  \caption{Matriz de confusión para la clasificación con Random Forest en la partición de prueba de semilla 42.}
+  \label{fig:confusion}
+\end{figure}
 
-\section{Instalación y operación}
-El paquete declara Python 3.11 como mínimo; la instalación fijada y probada se realizó con Python 3.13.7.
-La guía de instalación, configuración, navegación y pruebas está en
-\texttt{README.md}. En Windows, el flujo básico es:
-\begin{verbatim}
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
-\end{verbatim}
-Las versiones probadas se fijan en \texttt{requirements.txt}; las herramientas de desarrollo se declaran en
-\texttt{requirements-dev.txt}. La suite automatizada se ejecuta con \texttt{python -m pytest -q}.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{02_regresion_real_predicho.png}
+  \caption{Ingresos reales y predichos por RidgeCV para la partición de prueba de semilla 42. La diagonal indica
+  predicción perfecta.}
+  \label{fig:regresion}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{03_segmentacion_clientes.png}
+  \caption{Segmentación K-Means con $k=3$ sobre las dos variables seleccionadas, proyectada en componentes
+  principales. El porcentaje de cada eje indica la varianza explicada por esa componente.}
+  \label{fig:clusters}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{04_comparacion_benchmarks.png}
+  \caption{Comparación de las mejores configuraciones evaluadas en cada tarea. F1 macro y silhouette se maximizan;
+  RMSE se minimiza.}
+  \label{fig:benchmarks}
+\end{figure}
+
+\section{Interpretación y limitaciones}
+En \texttt{drug200.csv}, el mejor resultado del benchmark se obtiene con un árbol de decisión; la evaluación
+adicional de Random Forest permite revisar la matriz de confusión y el cambio entre tres particiones. En el conjunto
+sintético, los modelos lineales obtienen los menores errores entre las configuraciones comparadas, lo cual es
+coherente con la construcción aditiva del objetivo. Para la segmentación, K-Means con cuatro grupos alcanza el
+mayor silhouette de las configuraciones de agrupamiento evaluadas; la figura usa tres grupos únicamente como una
+vista complementaria.
+
+Estos resultados no demuestran generalización a otros datos. Los conjuntos heredados de clasificación y
+agrupamiento no incluyen metadatos de procedencia ni licencia en el repositorio; no se atribuye aquí un origen
+externo y debe confirmarse antes de redistribuirlos. El conjunto de regresión es sintético. Las métricas dependen
+de las columnas, la partición y los parámetros elegidos; no deben interpretarse como evidencia causal ni como
+garantía de rendimiento en producción.
 
 \section{Verificación}
-Las pruebas cubren validación, persistencia, servicios, arquitectura, mensajería, agencia, fábrica y agentes.
-También se ejecutan pruebas de apertura de las nuevas páginas Streamlit y de creación/eliminación dinámica de un
-agente de plugin. Los resultados de la validación de entrega se registran en \texttt{docs/EVIDENCIAS.md}.
+La suite automatizada del proyecto se documenta en \url{docs/evidencias/README.md}; el script de experimentos
+puede ejecutarse independientemente de las pruebas. Las fuentes CSV de entrada, configuraciones, semillas,
+versiones de Python y hashes SHA-256 se registran en \url{docs/resultados/resultados.json}. Las referencias
+metodológicas se incluyen a continuación.
 
-\section{Limitaciones}
-La calidad y pertinencia de las métricas dependen del conjunto y de la configuración elegida. El servicio de IA es
-opcional y requiere credenciales propias. La procedencia de los conjuntos de datos CSV heredados no está registrada.
-La visualización de los diagramas Mermaid requiere un visor compatible; sus fuentes están en
-\texttt{docs/DIAGRAMAS.md}.
+\bibliographystyle{plainnat}
+\bibliography{references}
 
 \end{document}

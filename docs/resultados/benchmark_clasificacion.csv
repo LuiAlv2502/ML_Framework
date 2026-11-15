@@ -1,0 +1,13 @@
+﻿Modelo,Algoritmo,Familia,Configuración,Parámetros,accuracy,precision_macro,recall_macro,f1_macro
+Árbol (estándar),Árbol de decisión,árbol,estándar,estándar,0.98,0.9916666666666668,0.9846153846153847,0.9877446808510637
+"RF 100 árboles, max_depth=6",Bosques aleatorios,ensamble bagging,variación,"max_depth=6, n_estimators=100",0.98,0.9916666666666668,0.9846153846153847,0.9877446808510637
+RF 200 árboles (estándar),Bosques aleatorios,ensamble bagging,estándar,estándar,0.98,0.9916666666666668,0.9846153846153847,0.9877446808510637
+Árbol max_depth=4,Árbol de decisión,árbol,variación,max_depth=4,0.98,0.9916666666666668,0.9846153846153847,0.9877446808510637
+Gradient Boosting (estándar),Gradient Boosting,ensamble boosting,estándar,estándar,0.98,0.9916666666666668,0.9846153846153847,0.9877446808510637
+"XGBoost lr=0.05, 300 árboles",XGBoost,ensamble boosting,variación,"learning_rate=0.05, n_estimators=300",0.98,0.96,0.9666666666666668,0.9595959595959596
+XGBoost (estándar),XGBoost,ensamble boosting,estándar,estándar,0.98,0.96,0.9666666666666668,0.9595959595959596
+KNN k=3,K vecinos más cercanos,vecinos,variación,n_neighbors=3,0.82,0.9080808080808082,0.7898550724637682,0.8210752688172043
+KNN k=11,K vecinos más cercanos,vecinos,variación,n_neighbors=11,0.76,0.8928571428571429,0.6085284280936454,0.6690466531440162
+KNN k=5 (estándar),K vecinos más cercanos,vecinos,estándar,estándar,0.72,0.7769082125603866,0.622463768115942,0.6466126300067394
+AdaBoost 80 (estándar),AdaBoost,ensamble boosting,estándar,estándar,0.82,0.4616666666666667,0.5846153846153846,0.5112619222303741
+AdaBoost 200,AdaBoost,ensamble boosting,variación,n_estimators=200,0.82,0.4616666666666667,0.5846153846153846,0.5112619222303741

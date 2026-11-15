@@ -1,0 +1,7 @@
+﻿Configuración,Algoritmo,Tipo,Parámetros,silhouette,davies_bouldin,calinski_harabasz,grupos,inercia,correlacion_cofenetica,varianza_acumulada,trustworthiness
+K-Means k=4,K-Means,Agrupamiento,n_clusters=4,0.4939069237513199,0.7095564965521565,174.59521459297633,4.0,108.92131661364355,,,
+K-Means k=3,K-Means,Agrupamiento,n_clusters=3,0.46658474419000145,0.716482156943549,151.3351212635948,3.0,157.70400815035947,,,
+HAC Ward k=3,HAC,Agrupamiento,"linkage=ward, n_clusters=3",0.4610481446570447,0.7072871869794292,143.77956237851728,3.0,,0.72091281930771,,
+K-Means k=2,K-Means,Agrupamiento,n_clusters=2,0.3212707813918878,1.266953745774289,95.66940839463767,2.0,269.6910121927639,,,
+PCA 2 componentes,PCA,Reducción,n_components=2,,,,,,,1.0,0.9999479166666667
+PCA 2 componentes con whitening,PCA,Reducción,"n_components=2, svd_solver=full, whiten=True",,,,,,,1.0,0.9999427083333333

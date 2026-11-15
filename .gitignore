@@ -40,3 +40,10 @@ resultados_eda.csv
 
 # Entregables generados
 *.zip
+docs/technical_report.aux
+docs/technical_report.bbl
+docs/technical_report.blg
+docs/technical_report.fdb_latexmk
+docs/technical_report.fls
+docs/technical_report.out
+docs/technical_report.toc
