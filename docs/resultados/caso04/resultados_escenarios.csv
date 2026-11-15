@@ -1,0 +1,10 @@
+﻿dataset,target,scenario,complexity,trials,duration_s_total,interactions_total,tasks_completed_total,errors_total,quality_metric,quality_mean,quality_std
+drug200.csv,Drug,Agrupamiento inicial,Baja,1,1.9719,4,1,0,silhouette,0.42055,0.0
+drug200.csv,Drug,Preparación EDA y clasificación,Media,3,3.413,16,4,0,f1_macro,0.737074,0.124732
+drug200.csv,Drug,Selección y resolución de alternativas,Alta,3,1.4994,18,6,0,f1_macro,0.828653,0.068832
+diabetes.csv,Outcome,Agrupamiento inicial,Baja,1,0.1795,4,1,0,silhouette,0.417946,0.0
+diabetes.csv,Outcome,Preparación EDA y clasificación,Media,3,4.9097,16,4,0,f1_macro,0.699799,0.006074
+diabetes.csv,Outcome,Selección y resolución de alternativas,Alta,3,1.0483,18,6,0,f1_macro,0.702476,0.024449
+water_potability.csv,Potability,Agrupamiento inicial,Baja,1,0.4845,4,1,0,silhouette,0.321857,0.0
+water_potability.csv,Potability,Preparación EDA y clasificación,Media,3,5.5738,16,4,0,f1_macro,0.59448,0.033187
+water_potability.csv,Potability,Selección y resolución de alternativas,Alta,3,1.7298,18,6,0,f1_macro,0.598543,0.026182

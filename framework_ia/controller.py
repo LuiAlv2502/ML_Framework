@@ -186,6 +186,14 @@ class FrameworkController:
                           "run_id": resultado.get("run_id")}
         return resultado
 
+    def run_case04_evaluation(
+        self, target: Any, seeds: list[int] | tuple[int, ...] | None = None
+    ) -> dict[str, Any]:
+        """Ejecuta los escenarios integrados del Estudio de Caso 04."""
+        from framework_ia.agents.case_study import ejecutar_demostracion_caso04
+
+        return ejecutar_demostracion_caso04(self, target, seeds)
+
     # ------------------------------------------------------------------
     # EDA y preprocesamiento
     # ------------------------------------------------------------------

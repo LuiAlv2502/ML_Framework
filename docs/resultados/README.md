@@ -41,3 +41,16 @@ archivos empleados, no verifican sus derechos de uso. `regression_sample.csv` es
 
 Para compilar el PDF incluido en el informe se necesita MiKTeX o una distribución compatible con `pdflatex` y
 `bibtex`; ejecute `.\scripts\build_report.ps1` desde la raíz del proyecto.
+
+## Estudio de Caso 04
+
+El protocolo de agencia y sistemas multiagentes se ejecuta aparte, sin alterar los benchmarks existentes:
+
+```powershell
+python scripts/run_case04_experiments.py
+```
+
+Genera el informe textual, un manifiesto con trazas y hashes, una tabla de métricas por escenario y una
+comparación centralizada/MAS por semilla en `docs/resultados/caso04/`. La ejecución predeterminada usa
+`drug200.csv`, `diabetes.csv` y `water_potability.csv` con semillas 42, 43 y 44. Puede cambiar las semillas
+con `--seeds 11 42 73`.

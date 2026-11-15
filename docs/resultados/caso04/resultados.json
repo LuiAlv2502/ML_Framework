@@ -1,0 +1,4444 @@
+{
+  "title": "Estudio de Caso 04: Agencia y Sistema Multiagente",
+  "generated_at": "2026-11-15T21:14:57+00:00",
+  "environment": {
+    "python": "3.13.9",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "pandas": "3.0.5",
+    "numpy": "2.3.5",
+    "scikit_learn": "1.9.0"
+  },
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "test_size": 0.25,
+  "selection_metric": "f1_macro",
+  "datasets": [
+    {
+      "file": "drug200.csv",
+      "target": "Drug",
+      "rows": 200,
+      "columns": 6,
+      "sha256": "10caebf3b055e149ef1e7494042031e510b47ba644f3c304bbb86c428fe89b66"
+    },
+    {
+      "file": "diabetes.csv",
+      "target": "Outcome",
+      "rows": 768,
+      "columns": 9,
+      "sha256": "698c203a14aa31941d2251175330c9199f3ccdb31597abbba2a3e35416257a72"
+    },
+    {
+      "file": "water_potability.csv",
+      "target": "Potability",
+      "rows": 3276,
+      "columns": 10,
+      "sha256": "904004bde729bfe3d2e195f46343bceead09e32a0eb95bb8184e7e20e029b2bf"
+    }
+  ],
+  "experiments": [
+    {
+      "dataset": "drug200.csv",
+      "target": "Drug",
+      "rows": 200,
+      "columns": 6,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "test_size": 0.25,
+      "k_values": [
+        3,
+        5,
+        7,
+        9,
+        11
+      ],
+      "scenarios": [
+        {
+          "scenario": "Agrupamiento inicial",
+          "complexity": "Baja",
+          "trials": 1,
+          "duration_s": 1.9719,
+          "interactions": 4,
+          "tasks_completed": 1,
+          "errors": 0,
+          "quality_metric": "silhouette",
+          "quality_mean": 0.42055,
+          "quality_std": 0.0,
+          "agents": [
+            "agente-agrupamiento"
+          ],
+          "run_ids": [
+            "20261115-151434_clustering-kmeans_30e33596"
+          ],
+          "task_runs": [
+            {
+              "task": "clustering.kmeans",
+              "seed": null,
+              "run_id": "20261115-151434_clustering-kmeans_30e33596",
+              "duration_s": 1.9719,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "silhouette",
+              "quality": 0.42055014114902334,
+              "agents": [
+                "agente-agrupamiento"
+              ],
+              "selected_agent": "agente-agrupamiento",
+              "policy": "priority",
+              "candidates": [
+                "agente-agrupamiento"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:32.548",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'clustering.kmeans'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:32.548",
+                  "decision": "Capacidad requerida: clustering.kmeans",
+                  "justification": "La tarea ya es una capacidad (dominio.accion)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:32.548",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-agrupamiento (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:32.548",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.505",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-agrupamiento en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.505",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-agrupamiento)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:32.548",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "clustering.kmeans",
+                  "status": "processed",
+                  "correlation_id": "dfadf8e7b016",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:32.548",
+                  "sender": "coordinador",
+                  "receiver": "agente-agrupamiento",
+                  "performative": "request",
+                  "task": "clustering.kmeans",
+                  "status": "processed",
+                  "correlation_id": "dfadf8e7b016",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.505",
+                  "sender": "agente-agrupamiento",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "clustering.kmeans",
+                  "status": "delivered",
+                  "correlation_id": "dfadf8e7b016",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.506",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "clustering.kmeans",
+                  "status": "delivered",
+                  "correlation_id": "dfadf8e7b016",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "scenario": "Preparación EDA y clasificación",
+          "complexity": "Media",
+          "trials": 3,
+          "duration_s": 3.413,
+          "interactions": 16,
+          "tasks_completed": 4,
+          "errors": 0,
+          "quality_metric": "f1_macro",
+          "quality_mean": 0.737074,
+          "quality_std": 0.124732,
+          "agents": [
+            "agente-eda",
+            "agente-clasificacion"
+          ],
+          "run_ids": [
+            "20261115-151437_eda_e9e5a539",
+            "20261115-151437_classification_04d7f4ba",
+            "20261115-151437_classification_94429b77",
+            "20261115-151437_classification_bd288d52"
+          ],
+          "task_runs": [
+            {
+              "task": "eda",
+              "seed": null,
+              "run_id": "20261115-151437_eda_e9e5a539",
+              "duration_s": 2.7242,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": null,
+              "quality": null,
+              "agents": [
+                "agente-eda"
+              ],
+              "selected_agent": "agente-eda",
+              "policy": "priority",
+              "candidates": [
+                "agente-eda"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:34.520",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'eda'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.520",
+                  "decision": "Capacidad requerida: eda.profile",
+                  "justification": "Tabla de enrutamiento (configuración): 'eda' → 'eda.profile'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.520",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-eda (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.520",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.178",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-eda en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.178",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-eda)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:34.520",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "eda",
+                  "status": "processed",
+                  "correlation_id": "14af9c67c14e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:34.520",
+                  "sender": "coordinador",
+                  "receiver": "agente-eda",
+                  "performative": "request",
+                  "task": "eda.profile",
+                  "status": "processed",
+                  "correlation_id": "14af9c67c14e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.178",
+                  "sender": "agente-eda",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "eda.profile",
+                  "status": "delivered",
+                  "correlation_id": "14af9c67c14e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.179",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "eda",
+                  "status": "delivered",
+                  "correlation_id": "14af9c67c14e",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 42,
+              "run_id": "20261115-151437_classification_04d7f4ba",
+              "duration_s": 0.2604,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6466126300067394,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:37.245",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.245",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.245",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.245",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.422",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.422",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:37.245",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "895bc30197c2",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.245",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "895bc30197c2",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.422",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "895bc30197c2",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.422",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "895bc30197c2",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 43,
+              "run_id": "20261115-151437_classification_94429b77",
+              "duration_s": 0.2813,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6852444909587766,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:37.506",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.506",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.506",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.506",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.703",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.703",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:37.505",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "88d9bf736513",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.506",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "88d9bf736513",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.702",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "88d9bf736513",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.705",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "88d9bf736513",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 44,
+              "run_id": "20261115-151437_classification_bd288d52",
+              "duration_s": 0.1471,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.8793650793650792,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:37.786",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.786",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.786",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.786",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.854",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.854",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:37.786",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "9ba92807add5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.787",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "9ba92807add5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.854",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "9ba92807add5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:37.854",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "9ba92807add5",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "scenario": "Selección y resolución de alternativas",
+          "complexity": "Alta",
+          "trials": 3,
+          "duration_s": 1.4994,
+          "interactions": 18,
+          "tasks_completed": 6,
+          "errors": 0,
+          "quality_metric": "f1_macro",
+          "quality_mean": 0.828653,
+          "quality_std": 0.068832,
+          "agents": [
+            "knn_auto-cc7db2",
+            "agente-clasificacion"
+          ],
+          "run_ids": [
+            "20261115-151438_classification_29f82737",
+            "20261115-151439_classification_1315211c",
+            "20261115-151440_classification_7c013aa6"
+          ],
+          "task_runs": [
+            {
+              "task": "classification",
+              "seed": 42,
+              "run_id": "20261115-151438_classification_29f82737",
+              "duration_s": 0.4691,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.8210752688172043,
+              "agents": [
+                "knn_auto-cc7db2",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-cc7db2",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-cc7db2",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-cc7db2",
+                  "metric": "f1_macro",
+                  "value": 0.8210752688172043,
+                  "elapsed_s": 0.3224
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.6466126300067394,
+                  "elapsed_s": 0.1428
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:38.400",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.400",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.401",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-cc7db2 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.401",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.866",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-cc7db2, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.866",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-cc7db2' por mayor f1_macro (0.8210752688172043) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:38.400",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "8feb96fd939f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.401",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-cc7db2",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "8feb96fd939f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.723",
+                  "sender": "knn_auto-cc7db2",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "8feb96fd939f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.723",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "8feb96fd939f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.866",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "8feb96fd939f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:38.866",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "8feb96fd939f",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 43,
+              "run_id": "20261115-151439_classification_1315211c",
+              "duration_s": 0.5301,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.7639243498817967,
+              "agents": [
+                "knn_auto-cc7db2",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-cc7db2",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-cc7db2",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-cc7db2",
+                  "metric": "f1_macro",
+                  "value": 0.7639243498817967,
+                  "elapsed_s": 0.465
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.6852444909587766,
+                  "elapsed_s": 0.0627
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:39.304",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.304",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.304",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-cc7db2 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.304",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.833",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-cc7db2, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.833",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-cc7db2' por mayor f1_macro (0.7639243498817967) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:39.304",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "2bfdc2fb20a1",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.305",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-cc7db2",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "2bfdc2fb20a1",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.770",
+                  "sender": "knn_auto-cc7db2",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "2bfdc2fb20a1",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.770",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "2bfdc2fb20a1",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.833",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "2bfdc2fb20a1",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:39.833",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "2bfdc2fb20a1",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 44,
+              "run_id": "20261115-151440_classification_7c013aa6",
+              "duration_s": 0.5002,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.9009607102630358,
+              "agents": [
+                "knn_auto-cc7db2",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-cc7db2",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-cc7db2",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-cc7db2",
+                  "metric": "f1_macro",
+                  "value": 0.9009607102630358,
+                  "elapsed_s": 0.4364
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.8793650793650792,
+                  "elapsed_s": 0.0614
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:40.279",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.279",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.280",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-cc7db2 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.280",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.778",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-cc7db2, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.778",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-cc7db2' por mayor f1_macro (0.9009607102630358) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:40.279",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "53e4811901e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.280",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-cc7db2",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "53e4811901e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.717",
+                  "sender": "knn_auto-cc7db2",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "53e4811901e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.717",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "53e4811901e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.778",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "53e4811901e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.778",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "53e4811901e5",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "comparison": {
+        "centralized": {
+          "approach": "Centralizado",
+          "trials": 3,
+          "duration_s": 0.401867,
+          "duration_std": 0.042935,
+          "interactions": 0.0,
+          "tasks_completed": 2.0,
+          "models_evaluated": 6,
+          "errors": 0,
+          "quality": 0.828653,
+          "quality_std": 0.068832,
+          "quality_metric": "f1_macro",
+          "selected": [
+            "KNN automático"
+          ],
+          "run_ids": [
+            "20261115-151438_case04-centralized-classificat_6c182a09",
+            "20261115-151439_case04-centralized-classificat_351f3c73",
+            "20261115-151440_case04-centralized-classificat_8364b0c5"
+          ]
+        },
+        "multiagent": {
+          "approach": "MAS",
+          "trials": 3,
+          "duration_s": 0.4998,
+          "duration_std": 0.030502,
+          "interactions": 6.0,
+          "tasks_completed": 2.0,
+          "models_evaluated": 6,
+          "errors": 0,
+          "quality": 0.828653,
+          "quality_std": 0.068832,
+          "quality_metric": "f1_macro",
+          "selected": [
+            "knn_auto (k=11)",
+            "knn_auto (k=3)"
+          ],
+          "run_ids": [
+            "20261115-151438_classification_29f82737",
+            "20261115-151439_classification_1315211c",
+            "20261115-151440_classification_7c013aa6"
+          ]
+        },
+        "trials": [
+          {
+            "seed": 42,
+            "approach": "Centralizado",
+            "duration_s": 0.4511,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.8210752688172043,
+            "selected": "KNN automático",
+            "run_id": "20261115-151438_case04-centralized-classificat_6c182a09",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.6466126300067394
+              },
+              {
+                "label": "KNN automático",
+                "k": 3,
+                "f1_macro": 0.8210752688172043
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 42,
+            "approach": "MAS",
+            "duration_s": 0.4691,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.8210752688172043,
+            "selected": "knn_auto (k=3)",
+            "run_id": "20261115-151438_classification_29f82737",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-cc7db2",
+                "metric": "f1_macro",
+                "value": 0.8210752688172043,
+                "elapsed_s": 0.3224
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.6466126300067394,
+                "elapsed_s": 0.1428
+              }
+            ],
+            "selected_agent": "knn_auto-cc7db2",
+            "candidate_agents": [
+              "knn_auto-cc7db2",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:38.400",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "8feb96fd939f",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.401",
+                "sender": "coordinador",
+                "receiver": "knn_auto-cc7db2",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "8feb96fd939f",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.723",
+                "sender": "knn_auto-cc7db2",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "8feb96fd939f",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.723",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "8feb96fd939f",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.866",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "8feb96fd939f",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.866",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "8feb96fd939f",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:38.400",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.400",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.401",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-cc7db2 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.401",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.866",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-cc7db2, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:38.866",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-cc7db2' por mayor f1_macro (0.8210752688172043) entre 2 agentes."
+              }
+            ]
+          },
+          {
+            "seed": 43,
+            "approach": "Centralizado",
+            "duration_s": 0.3823,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.7639243498817967,
+            "selected": "KNN automático",
+            "run_id": "20261115-151439_case04-centralized-classificat_351f3c73",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.6852444909587766
+              },
+              {
+                "label": "KNN automático",
+                "k": 11,
+                "f1_macro": 0.7639243498817967
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 43,
+            "approach": "MAS",
+            "duration_s": 0.5301,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.7639243498817967,
+            "selected": "knn_auto (k=11)",
+            "run_id": "20261115-151439_classification_1315211c",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-cc7db2",
+                "metric": "f1_macro",
+                "value": 0.7639243498817967,
+                "elapsed_s": 0.465
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.6852444909587766,
+                "elapsed_s": 0.0627
+              }
+            ],
+            "selected_agent": "knn_auto-cc7db2",
+            "candidate_agents": [
+              "knn_auto-cc7db2",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:39.304",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "2bfdc2fb20a1",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.305",
+                "sender": "coordinador",
+                "receiver": "knn_auto-cc7db2",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "2bfdc2fb20a1",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.770",
+                "sender": "knn_auto-cc7db2",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "2bfdc2fb20a1",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.770",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "2bfdc2fb20a1",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.833",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "2bfdc2fb20a1",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.833",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "2bfdc2fb20a1",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:39.304",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.304",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.304",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-cc7db2 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.304",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.833",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-cc7db2, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:39.833",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-cc7db2' por mayor f1_macro (0.7639243498817967) entre 2 agentes."
+              }
+            ]
+          },
+          {
+            "seed": 44,
+            "approach": "Centralizado",
+            "duration_s": 0.3722,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.9009607102630358,
+            "selected": "KNN automático",
+            "run_id": "20261115-151440_case04-centralized-classificat_8364b0c5",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.8793650793650792
+              },
+              {
+                "label": "KNN automático",
+                "k": 3,
+                "f1_macro": 0.9009607102630358
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 44,
+            "approach": "MAS",
+            "duration_s": 0.5002,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.9009607102630358,
+            "selected": "knn_auto (k=3)",
+            "run_id": "20261115-151440_classification_7c013aa6",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-cc7db2",
+                "metric": "f1_macro",
+                "value": 0.9009607102630358,
+                "elapsed_s": 0.4364
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.8793650793650792,
+                "elapsed_s": 0.0614
+              }
+            ],
+            "selected_agent": "knn_auto-cc7db2",
+            "candidate_agents": [
+              "knn_auto-cc7db2",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:40.279",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "53e4811901e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.280",
+                "sender": "coordinador",
+                "receiver": "knn_auto-cc7db2",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "53e4811901e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.717",
+                "sender": "knn_auto-cc7db2",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "53e4811901e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.717",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "53e4811901e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.778",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "53e4811901e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.778",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "53e4811901e5",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:40.279",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.279",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.280",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-cc7db2 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.280",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.778",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-cc7db2, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:40.778",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-cc7db2' por mayor f1_macro (0.9009607102630358) entre 2 agentes."
+              }
+            ]
+          }
+        ]
+      },
+      "runs": {
+        "simple": [
+          "20261115-151434_clustering-kmeans_30e33596"
+        ],
+        "cooperation": [
+          "20261115-151437_eda_e9e5a539",
+          "20261115-151437_classification_04d7f4ba",
+          "20261115-151437_classification_94429b77",
+          "20261115-151437_classification_bd288d52"
+        ],
+        "conflict": [
+          "20261115-151438_classification_29f82737",
+          "20261115-151439_classification_1315211c",
+          "20261115-151440_classification_7c013aa6"
+        ]
+      },
+      "file": "drug200.csv",
+      "description": "Medicamentos (cinco clases)"
+    },
+    {
+      "dataset": "diabetes.csv",
+      "target": "Outcome",
+      "rows": 768,
+      "columns": 9,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "test_size": 0.25,
+      "k_values": [
+        3,
+        5,
+        7,
+        9,
+        11
+      ],
+      "scenarios": [
+        {
+          "scenario": "Agrupamiento inicial",
+          "complexity": "Baja",
+          "trials": 1,
+          "duration_s": 0.1795,
+          "interactions": 4,
+          "tasks_completed": 1,
+          "errors": 0,
+          "quality_metric": "silhouette",
+          "quality_mean": 0.417946,
+          "quality_std": 0.0,
+          "agents": [
+            "agente-agrupamiento"
+          ],
+          "run_ids": [
+            "20261115-151440_clustering-kmeans_94103c48"
+          ],
+          "task_runs": [
+            {
+              "task": "clustering.kmeans",
+              "seed": null,
+              "run_id": "20261115-151440_clustering-kmeans_94103c48",
+              "duration_s": 0.1795,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "silhouette",
+              "quality": 0.41794637258555795,
+              "agents": [
+                "agente-agrupamiento"
+              ],
+              "selected_agent": "agente-agrupamiento",
+              "policy": "priority",
+              "candidates": [
+                "agente-agrupamiento"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:40.831",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'clustering.kmeans'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.831",
+                  "decision": "Capacidad requerida: clustering.kmeans",
+                  "justification": "La tarea ya es una capacidad (dominio.accion)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.831",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-agrupamiento (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.831",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.988",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-agrupamiento en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.988",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-agrupamiento)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:40.831",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "clustering.kmeans",
+                  "status": "processed",
+                  "correlation_id": "1f89b7b54c52",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.831",
+                  "sender": "coordinador",
+                  "receiver": "agente-agrupamiento",
+                  "performative": "request",
+                  "task": "clustering.kmeans",
+                  "status": "processed",
+                  "correlation_id": "1f89b7b54c52",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.988",
+                  "sender": "agente-agrupamiento",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "clustering.kmeans",
+                  "status": "delivered",
+                  "correlation_id": "1f89b7b54c52",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:40.989",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "clustering.kmeans",
+                  "status": "delivered",
+                  "correlation_id": "1f89b7b54c52",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "scenario": "Preparación EDA y clasificación",
+          "complexity": "Media",
+          "trials": 3,
+          "duration_s": 4.9097,
+          "interactions": 16,
+          "tasks_completed": 4,
+          "errors": 0,
+          "quality_metric": "f1_macro",
+          "quality_mean": 0.699799,
+          "quality_std": 0.006074,
+          "agents": [
+            "agente-eda",
+            "agente-clasificacion"
+          ],
+          "run_ids": [
+            "20261115-151445_eda_b526da2d",
+            "20261115-151445_classification_e0e069a3",
+            "20261115-151445_classification_c3738dd3",
+            "20261115-151445_classification_da6c9a38"
+          ],
+          "task_runs": [
+            {
+              "task": "eda",
+              "seed": null,
+              "run_id": "20261115-151445_eda_b526da2d",
+              "duration_s": 4.4925,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": null,
+              "quality": null,
+              "agents": [
+                "agente-eda"
+              ],
+              "selected_agent": "agente-eda",
+              "policy": "priority",
+              "candidates": [
+                "agente-eda"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:41.011",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'eda'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:41.011",
+                  "decision": "Capacidad requerida: eda.profile",
+                  "justification": "Tabla de enrutamiento (configuración): 'eda' → 'eda.profile'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:41.011",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-eda (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:41.011",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.437",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-eda en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.437",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-eda)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:41.011",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "eda",
+                  "status": "processed",
+                  "correlation_id": "022f1dfa8486",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:41.011",
+                  "sender": "coordinador",
+                  "receiver": "agente-eda",
+                  "performative": "request",
+                  "task": "eda.profile",
+                  "status": "processed",
+                  "correlation_id": "022f1dfa8486",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.437",
+                  "sender": "agente-eda",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "eda.profile",
+                  "status": "delivered",
+                  "correlation_id": "022f1dfa8486",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.438",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "eda",
+                  "status": "delivered",
+                  "correlation_id": "022f1dfa8486",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 42,
+              "run_id": "20261115-151445_classification_e0e069a3",
+              "duration_s": 0.1499,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6975444015444014,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:45.504",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.504",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.504",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.504",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.587",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.587",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:45.504",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "b34b4c7e4be9",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.504",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "b34b4c7e4be9",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.587",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "b34b4c7e4be9",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.587",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "b34b4c7e4be9",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 43,
+              "run_id": "20261115-151445_classification_c3738dd3",
+              "duration_s": 0.1527,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.7066770511937213,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:45.654",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.654",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.655",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.655",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.757",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.757",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:45.654",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "beae0e64f69f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.655",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "beae0e64f69f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.757",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "beae0e64f69f",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.757",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "beae0e64f69f",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 44,
+              "run_id": "20261115-151445_classification_da6c9a38",
+              "duration_s": 0.1146,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6951741904562202,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:45.807",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.807",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.807",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.807",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.870",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.870",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:45.807",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "1f3b74bd9a84",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.807",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "1f3b74bd9a84",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.870",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "1f3b74bd9a84",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:45.871",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "1f3b74bd9a84",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "scenario": "Selección y resolución de alternativas",
+          "complexity": "Alta",
+          "trials": 3,
+          "duration_s": 1.0483,
+          "interactions": 18,
+          "tasks_completed": 6,
+          "errors": 0,
+          "quality_metric": "f1_macro",
+          "quality_mean": 0.702476,
+          "quality_std": 0.024449,
+          "agents": [
+            "knn_auto-04f049",
+            "agente-clasificacion"
+          ],
+          "run_ids": [
+            "20261115-151446_classification_ad3ad5c7",
+            "20261115-151447_classification_bcd2bbc1",
+            "20261115-151448_classification_4e2aff56"
+          ],
+          "task_runs": [
+            {
+              "task": "classification",
+              "seed": 42,
+              "run_id": "20261115-151446_classification_ad3ad5c7",
+              "duration_s": 0.3403,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.7141439205955336,
+              "agents": [
+                "knn_auto-04f049",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-04f049",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-04f049",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-04f049",
+                  "metric": "f1_macro",
+                  "value": 0.7141439205955336,
+                  "elapsed_s": 0.2924
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.666501240694789,
+                  "elapsed_s": 0.0462
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:46.272",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.272",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.273",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-04f049 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.273",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.612",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-04f049, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.612",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-04f049' por mayor f1_macro (0.7141439205955336) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:46.272",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "729843014307",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.273",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-04f049",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "729843014307",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.565",
+                  "sender": "knn_auto-04f049",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "729843014307",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.565",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "729843014307",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.612",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "729843014307",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:46.612",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "729843014307",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 43,
+              "run_id": "20261115-151447_classification_bcd2bbc1",
+              "duration_s": 0.389,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.7189047752546491,
+              "agents": [
+                "knn_auto-04f049",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-04f049",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-04f049",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-04f049",
+                  "metric": "f1_macro",
+                  "value": 0.7189047752546491,
+                  "elapsed_s": 0.34
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.713999088007296,
+                  "elapsed_s": 0.0473
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:47.006",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.006",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.006",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-04f049 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.006",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.394",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-04f049, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.394",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-04f049' por mayor f1_macro (0.7189047752546491) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:47.006",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "32351c1a92f5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.007",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-04f049",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "32351c1a92f5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.347",
+                  "sender": "knn_auto-04f049",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "32351c1a92f5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.347",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "32351c1a92f5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.394",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "32351c1a92f5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.394",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "32351c1a92f5",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 44,
+              "run_id": "20261115-151448_classification_4e2aff56",
+              "duration_s": 0.319,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6743791641429436,
+              "agents": [
+                "knn_auto-04f049",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-04f049",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-04f049",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-04f049",
+                  "metric": "f1_macro",
+                  "value": 0.6743791641429436,
+                  "elapsed_s": 0.2407
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.6743791641429436,
+                  "elapsed_s": 0.076
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:47.789",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.789",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.790",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-04f049 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.790",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.107",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-04f049, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.107",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-04f049' por mayor f1_macro (0.6743791641429436) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:47.789",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "9dfc2648e7e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:47.790",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-04f049",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "9dfc2648e7e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.031",
+                  "sender": "knn_auto-04f049",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "9dfc2648e7e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.031",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "9dfc2648e7e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.107",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "9dfc2648e7e5",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.107",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "9dfc2648e7e5",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "comparison": {
+        "centralized": {
+          "approach": "Centralizado",
+          "trials": 3,
+          "duration_s": 0.330133,
+          "duration_std": 0.012002,
+          "interactions": 0.0,
+          "tasks_completed": 2.0,
+          "models_evaluated": 6,
+          "errors": 0,
+          "quality": 0.702476,
+          "quality_std": 0.024449,
+          "quality_metric": "f1_macro",
+          "selected": [
+            "KNN automático",
+            "KNN fijo (k=5)"
+          ],
+          "run_ids": [
+            "20261115-151446_case04-centralized-classificat_13cbc478",
+            "20261115-151446_case04-centralized-classificat_f942c155",
+            "20261115-151447_case04-centralized-classificat_9004fd88"
+          ]
+        },
+        "multiagent": {
+          "approach": "MAS",
+          "trials": 3,
+          "duration_s": 0.349433,
+          "duration_std": 0.035883,
+          "interactions": 6.0,
+          "tasks_completed": 2.0,
+          "models_evaluated": 6,
+          "errors": 0,
+          "quality": 0.702476,
+          "quality_std": 0.024449,
+          "quality_metric": "f1_macro",
+          "selected": [
+            "knn_auto (k=3)",
+            "knn_auto (k=5)",
+            "knn_auto (k=7)"
+          ],
+          "run_ids": [
+            "20261115-151446_classification_ad3ad5c7",
+            "20261115-151447_classification_bcd2bbc1",
+            "20261115-151448_classification_4e2aff56"
+          ]
+        },
+        "trials": [
+          {
+            "seed": 42,
+            "approach": "Centralizado",
+            "duration_s": 0.3437,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.7141439205955336,
+            "selected": "KNN automático",
+            "run_id": "20261115-151446_case04-centralized-classificat_13cbc478",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.666501240694789
+              },
+              {
+                "label": "KNN automático",
+                "k": 7,
+                "f1_macro": 0.7141439205955336
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 42,
+            "approach": "MAS",
+            "duration_s": 0.3403,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.7141439205955336,
+            "selected": "knn_auto (k=7)",
+            "run_id": "20261115-151446_classification_ad3ad5c7",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-04f049",
+                "metric": "f1_macro",
+                "value": 0.7141439205955336,
+                "elapsed_s": 0.2924
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.666501240694789,
+                "elapsed_s": 0.0462
+              }
+            ],
+            "selected_agent": "knn_auto-04f049",
+            "candidate_agents": [
+              "knn_auto-04f049",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:46.272",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "729843014307",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.273",
+                "sender": "coordinador",
+                "receiver": "knn_auto-04f049",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "729843014307",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.565",
+                "sender": "knn_auto-04f049",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "729843014307",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.565",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "729843014307",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.612",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "729843014307",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.612",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "729843014307",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:46.272",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.272",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.273",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-04f049 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.273",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.612",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-04f049, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:46.612",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-04f049' por mayor f1_macro (0.7141439205955336) entre 2 agentes."
+              }
+            ]
+          },
+          {
+            "seed": 43,
+            "approach": "Centralizado",
+            "duration_s": 0.3258,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.7189047752546491,
+            "selected": "KNN automático",
+            "run_id": "20261115-151446_case04-centralized-classificat_f942c155",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.713999088007296
+              },
+              {
+                "label": "KNN automático",
+                "k": 3,
+                "f1_macro": 0.7189047752546491
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 43,
+            "approach": "MAS",
+            "duration_s": 0.389,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.7189047752546491,
+            "selected": "knn_auto (k=3)",
+            "run_id": "20261115-151447_classification_bcd2bbc1",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-04f049",
+                "metric": "f1_macro",
+                "value": 0.7189047752546491,
+                "elapsed_s": 0.34
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.713999088007296,
+                "elapsed_s": 0.0473
+              }
+            ],
+            "selected_agent": "knn_auto-04f049",
+            "candidate_agents": [
+              "knn_auto-04f049",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:47.006",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "32351c1a92f5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.007",
+                "sender": "coordinador",
+                "receiver": "knn_auto-04f049",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "32351c1a92f5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.347",
+                "sender": "knn_auto-04f049",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "32351c1a92f5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.347",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "32351c1a92f5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.394",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "32351c1a92f5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.394",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "32351c1a92f5",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:47.006",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.006",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.006",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-04f049 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.006",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.394",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-04f049, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.394",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-04f049' por mayor f1_macro (0.7189047752546491) entre 2 agentes."
+              }
+            ]
+          },
+          {
+            "seed": 44,
+            "approach": "Centralizado",
+            "duration_s": 0.3209,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.6743791641429436,
+            "selected": "KNN fijo (k=5)",
+            "run_id": "20261115-151447_case04-centralized-classificat_9004fd88",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.6743791641429436
+              },
+              {
+                "label": "KNN automático",
+                "k": 5,
+                "f1_macro": 0.6743791641429436
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 44,
+            "approach": "MAS",
+            "duration_s": 0.319,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.6743791641429436,
+            "selected": "knn_auto (k=5)",
+            "run_id": "20261115-151448_classification_4e2aff56",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-04f049",
+                "metric": "f1_macro",
+                "value": 0.6743791641429436,
+                "elapsed_s": 0.2407
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.6743791641429436,
+                "elapsed_s": 0.076
+              }
+            ],
+            "selected_agent": "knn_auto-04f049",
+            "candidate_agents": [
+              "knn_auto-04f049",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:47.789",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "9dfc2648e7e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.790",
+                "sender": "coordinador",
+                "receiver": "knn_auto-04f049",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "9dfc2648e7e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:48.031",
+                "sender": "knn_auto-04f049",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "9dfc2648e7e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:48.031",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "9dfc2648e7e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:48.107",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "9dfc2648e7e5",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:48.107",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "9dfc2648e7e5",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:47.789",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.789",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.790",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-04f049 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:47.790",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:48.107",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-04f049, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:48.107",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-04f049' por mayor f1_macro (0.6743791641429436) entre 2 agentes."
+              }
+            ]
+          }
+        ]
+      },
+      "runs": {
+        "simple": [
+          "20261115-151440_clustering-kmeans_94103c48"
+        ],
+        "cooperation": [
+          "20261115-151445_eda_b526da2d",
+          "20261115-151445_classification_e0e069a3",
+          "20261115-151445_classification_c3738dd3",
+          "20261115-151445_classification_da6c9a38"
+        ],
+        "conflict": [
+          "20261115-151446_classification_ad3ad5c7",
+          "20261115-151447_classification_bcd2bbc1",
+          "20261115-151448_classification_4e2aff56"
+        ]
+      },
+      "file": "diabetes.csv",
+      "description": "Diabetes (clasificación binaria)"
+    },
+    {
+      "dataset": "water_potability.csv",
+      "target": "Potability",
+      "rows": 3276,
+      "columns": 10,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "test_size": 0.25,
+      "k_values": [
+        3,
+        5,
+        7,
+        9,
+        11
+      ],
+      "scenarios": [
+        {
+          "scenario": "Agrupamiento inicial",
+          "complexity": "Baja",
+          "trials": 1,
+          "duration_s": 0.4845,
+          "interactions": 4,
+          "tasks_completed": 1,
+          "errors": 0,
+          "quality_metric": "silhouette",
+          "quality_mean": 0.321857,
+          "quality_std": 0.0,
+          "agents": [
+            "agente-agrupamiento"
+          ],
+          "run_ids": [
+            "20261115-151448_clustering-kmeans_1d2cbfe1"
+          ],
+          "task_runs": [
+            {
+              "task": "clustering.kmeans",
+              "seed": null,
+              "run_id": "20261115-151448_clustering-kmeans_1d2cbfe1",
+              "duration_s": 0.4845,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "silhouette",
+              "quality": 0.3218571752316194,
+              "agents": [
+                "agente-agrupamiento"
+              ],
+              "selected_agent": "agente-agrupamiento",
+              "policy": "priority",
+              "candidates": [
+                "agente-agrupamiento"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:48.233",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'clustering.kmeans'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.233",
+                  "decision": "Capacidad requerida: clustering.kmeans",
+                  "justification": "La tarea ya es una capacidad (dominio.accion)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.233",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-agrupamiento (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.233",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.655",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-agrupamiento en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.655",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-agrupamiento)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:48.233",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "clustering.kmeans",
+                  "status": "processed",
+                  "correlation_id": "5a02e7ed5945",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.233",
+                  "sender": "coordinador",
+                  "receiver": "agente-agrupamiento",
+                  "performative": "request",
+                  "task": "clustering.kmeans",
+                  "status": "processed",
+                  "correlation_id": "5a02e7ed5945",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.655",
+                  "sender": "agente-agrupamiento",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "clustering.kmeans",
+                  "status": "delivered",
+                  "correlation_id": "5a02e7ed5945",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.656",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "clustering.kmeans",
+                  "status": "delivered",
+                  "correlation_id": "5a02e7ed5945",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "scenario": "Preparación EDA y clasificación",
+          "complexity": "Media",
+          "trials": 3,
+          "duration_s": 5.5738,
+          "interactions": 16,
+          "tasks_completed": 4,
+          "errors": 0,
+          "quality_metric": "f1_macro",
+          "quality_mean": 0.59448,
+          "quality_std": 0.033187,
+          "agents": [
+            "agente-eda",
+            "agente-clasificacion"
+          ],
+          "run_ids": [
+            "20261115-151453_eda_8b03f592",
+            "20261115-151453_classification_5096fcfc",
+            "20261115-151454_classification_c97ae13d",
+            "20261115-151454_classification_72fe485a"
+          ],
+          "task_runs": [
+            {
+              "task": "eda",
+              "seed": null,
+              "run_id": "20261115-151453_eda_8b03f592",
+              "duration_s": 4.9226,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": null,
+              "quality": null,
+              "agents": [
+                "agente-eda"
+              ],
+              "selected_agent": "agente-eda",
+              "policy": "priority",
+              "candidates": [
+                "agente-eda"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:48.719",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'eda'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.719",
+                  "decision": "Capacidad requerida: eda.profile",
+                  "justification": "Tabla de enrutamiento (configuración): 'eda' → 'eda.profile'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.719",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-eda (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.719",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.574",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-eda en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.574",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-eda)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:48.718",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "eda",
+                  "status": "processed",
+                  "correlation_id": "f5755c1902fe",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:48.719",
+                  "sender": "coordinador",
+                  "receiver": "agente-eda",
+                  "performative": "request",
+                  "task": "eda.profile",
+                  "status": "processed",
+                  "correlation_id": "f5755c1902fe",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.574",
+                  "sender": "agente-eda",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "eda.profile",
+                  "status": "delivered",
+                  "correlation_id": "f5755c1902fe",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.574",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "eda",
+                  "status": "delivered",
+                  "correlation_id": "f5755c1902fe",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 42,
+              "run_id": "20261115-151453_classification_5096fcfc",
+              "duration_s": 0.2326,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.5563019747000028,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:53.642",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.642",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.642",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.642",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.788",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.788",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:53.641",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "3ccd6a1671de",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.642",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "3ccd6a1671de",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.788",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "3ccd6a1671de",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.788",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "3ccd6a1671de",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 43,
+              "run_id": "20261115-151454_classification_c97ae13d",
+              "duration_s": 0.2311,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6164381963483637,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:53.874",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.874",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.875",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.875",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.039",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.039",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:53.874",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "e9d5e2aee78e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:53.875",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "e9d5e2aee78e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.039",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "e9d5e2aee78e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.040",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "e9d5e2aee78e",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 44,
+              "run_id": "20261115-151454_classification_72fe485a",
+              "duration_s": 0.1875,
+              "interactions": 4,
+              "tasks_completed": 1,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.61069884367287,
+              "agents": [
+                "agente-clasificacion"
+              ],
+              "selected_agent": "agente-clasificacion",
+              "policy": "priority",
+              "candidates": [
+                "agente-clasificacion"
+              ],
+              "alternatives": [],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:54.105",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.105",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.105",
+                  "decision": "Descubrimiento: 1 candidato(s)",
+                  "justification": "Registro consultado por capacidad: agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.105",
+                  "decision": "Política: priority",
+                  "justification": "Delegar al mejor candidato con fallback."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.220",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: agente-clasificacion en 1 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.220",
+                  "decision": "Consolidación",
+                  "justification": "Un solo agente respondió (agente-clasificacion)."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:54.105",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "486986db9e0a",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.105",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "486986db9e0a",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.219",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "486986db9e0a",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.220",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "486986db9e0a",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "scenario": "Selección y resolución de alternativas",
+          "complexity": "Alta",
+          "trials": 3,
+          "duration_s": 1.7298,
+          "interactions": 18,
+          "tasks_completed": 6,
+          "errors": 0,
+          "quality_metric": "f1_macro",
+          "quality_mean": 0.598543,
+          "quality_std": 0.026182,
+          "agents": [
+            "knn_auto-0df5e0",
+            "agente-clasificacion"
+          ],
+          "run_ids": [
+            "20261115-151455_classification_b6c1e678",
+            "20261115-151456_classification_236127f5",
+            "20261115-151457_classification_fa2336c6"
+          ],
+          "task_runs": [
+            {
+              "task": "classification",
+              "seed": 42,
+              "run_id": "20261115-151455_classification_b6c1e678",
+              "duration_s": 0.5844,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.568492442433981,
+              "agents": [
+                "knn_auto-0df5e0",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-0df5e0",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-0df5e0",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-0df5e0",
+                  "metric": "f1_macro",
+                  "value": 0.568492442433981,
+                  "elapsed_s": 0.4306
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.5563019747000028,
+                  "elapsed_s": 0.1521
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:54.831",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.831",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.831",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-0df5e0 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.831",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:55.414",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-0df5e0, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:55.414",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-0df5e0' por mayor f1_macro (0.568492442433981) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:54.830",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "cf6e4726076e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:54.831",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-0df5e0",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "cf6e4726076e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:55.262",
+                  "sender": "knn_auto-0df5e0",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "cf6e4726076e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:55.262",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "cf6e4726076e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:55.414",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "cf6e4726076e",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:55.414",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "cf6e4726076e",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 43,
+              "run_id": "20261115-151456_classification_236127f5",
+              "duration_s": 0.5335,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.6164381963483637,
+              "agents": [
+                "knn_auto-0df5e0",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-0df5e0",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-0df5e0",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-0df5e0",
+                  "metric": "f1_macro",
+                  "value": 0.6164381963483637,
+                  "elapsed_s": 0.422
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.6164381963483637,
+                  "elapsed_s": 0.1098
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:56.031",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.031",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.031",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-0df5e0 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.031",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.564",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-0df5e0, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.564",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-0df5e0' por mayor f1_macro (0.6164381963483637) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:56.031",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "61e7a4d34426",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.032",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-0df5e0",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "61e7a4d34426",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.454",
+                  "sender": "knn_auto-0df5e0",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "61e7a4d34426",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.454",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "61e7a4d34426",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.564",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "61e7a4d34426",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:56.564",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "61e7a4d34426",
+                  "error": null
+                }
+              ]
+            },
+            {
+              "task": "classification",
+              "seed": 44,
+              "run_id": "20261115-151457_classification_fa2336c6",
+              "duration_s": 0.6119,
+              "interactions": 6,
+              "tasks_completed": 2,
+              "errors": 0,
+              "quality_metric": "f1_macro",
+              "quality": 0.61069884367287,
+              "agents": [
+                "knn_auto-0df5e0",
+                "agente-clasificacion"
+              ],
+              "selected_agent": "knn_auto-0df5e0",
+              "policy": "fanout",
+              "candidates": [
+                "knn_auto-0df5e0",
+                "agente-clasificacion"
+              ],
+              "alternatives": [
+                {
+                  "agent_id": "knn_auto-0df5e0",
+                  "metric": "f1_macro",
+                  "value": 0.61069884367287,
+                  "elapsed_s": 0.4571
+                },
+                {
+                  "agent_id": "agente-clasificacion",
+                  "metric": "f1_macro",
+                  "value": 0.61069884367287,
+                  "elapsed_s": 0.1507
+                }
+              ],
+              "decisions": [
+                {
+                  "timestamp": "2026-11-15T15:14:57.239",
+                  "decision": "Solicitud recibida",
+                  "justification": "'controller' pidió la tarea 'classification'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.239",
+                  "decision": "Capacidad requerida: classification.train",
+                  "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.239",
+                  "decision": "Descubrimiento: 2 candidato(s)",
+                  "justification": "Registro consultado por capacidad: knn_auto-0df5e0 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.239",
+                  "decision": "Política: fanout",
+                  "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.847",
+                  "decision": "Delegación completada",
+                  "justification": "Respondieron: knn_auto-0df5e0, agente-clasificacion en 2 intento(s)."
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.847",
+                  "decision": "Consolidación",
+                  "justification": "Se eligió el resultado de 'knn_auto-0df5e0' por mayor f1_macro (0.61069884367287) entre 2 agentes."
+                }
+              ],
+              "messages": [
+                {
+                  "timestamp": "2026-11-15T15:14:57.239",
+                  "sender": "controller",
+                  "receiver": "coordinador",
+                  "performative": "request",
+                  "task": "classification",
+                  "status": "processed",
+                  "correlation_id": "5561d65767ba",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.239",
+                  "sender": "coordinador",
+                  "receiver": "knn_auto-0df5e0",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "5561d65767ba",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.696",
+                  "sender": "knn_auto-0df5e0",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "5561d65767ba",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.697",
+                  "sender": "coordinador",
+                  "receiver": "agente-clasificacion",
+                  "performative": "request",
+                  "task": "classification.train",
+                  "status": "processed",
+                  "correlation_id": "5561d65767ba",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.847",
+                  "sender": "agente-clasificacion",
+                  "receiver": "coordinador",
+                  "performative": "inform",
+                  "task": "classification.train",
+                  "status": "delivered",
+                  "correlation_id": "5561d65767ba",
+                  "error": null
+                },
+                {
+                  "timestamp": "2026-11-15T15:14:57.848",
+                  "sender": "coordinador",
+                  "receiver": "controller",
+                  "performative": "inform",
+                  "task": "classification",
+                  "status": "delivered",
+                  "correlation_id": "5561d65767ba",
+                  "error": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "comparison": {
+        "centralized": {
+          "approach": "Centralizado",
+          "trials": 3,
+          "duration_s": 0.551533,
+          "duration_std": 0.031694,
+          "interactions": 0.0,
+          "tasks_completed": 2.0,
+          "models_evaluated": 6,
+          "errors": 0,
+          "quality": 0.598543,
+          "quality_std": 0.026182,
+          "quality_metric": "f1_macro",
+          "selected": [
+            "KNN automático",
+            "KNN fijo (k=5)"
+          ],
+          "run_ids": [
+            "20261115-151454_case04-centralized-classificat_83c8cb3d",
+            "20261115-151455_case04-centralized-classificat_fa57e80e",
+            "20261115-151457_case04-centralized-classificat_45812f24"
+          ]
+        },
+        "multiagent": {
+          "approach": "MAS",
+          "trials": 3,
+          "duration_s": 0.5766,
+          "duration_std": 0.039778,
+          "interactions": 6.0,
+          "tasks_completed": 2.0,
+          "models_evaluated": 6,
+          "errors": 0,
+          "quality": 0.598543,
+          "quality_std": 0.026182,
+          "quality_metric": "f1_macro",
+          "selected": [
+            "knn_auto (k=3)",
+            "knn_auto (k=5)"
+          ],
+          "run_ids": [
+            "20261115-151455_classification_b6c1e678",
+            "20261115-151456_classification_236127f5",
+            "20261115-151457_classification_fa2336c6"
+          ]
+        },
+        "trials": [
+          {
+            "seed": 42,
+            "approach": "Centralizado",
+            "duration_s": 0.5257,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.568492442433981,
+            "selected": "KNN automático",
+            "run_id": "20261115-151454_case04-centralized-classificat_83c8cb3d",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.5563019747000028
+              },
+              {
+                "label": "KNN automático",
+                "k": 3,
+                "f1_macro": 0.568492442433981
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 42,
+            "approach": "MAS",
+            "duration_s": 0.5844,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.568492442433981,
+            "selected": "knn_auto (k=3)",
+            "run_id": "20261115-151455_classification_b6c1e678",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-0df5e0",
+                "metric": "f1_macro",
+                "value": 0.568492442433981,
+                "elapsed_s": 0.4306
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.5563019747000028,
+                "elapsed_s": 0.1521
+              }
+            ],
+            "selected_agent": "knn_auto-0df5e0",
+            "candidate_agents": [
+              "knn_auto-0df5e0",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:54.830",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "cf6e4726076e",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:54.831",
+                "sender": "coordinador",
+                "receiver": "knn_auto-0df5e0",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "cf6e4726076e",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:55.262",
+                "sender": "knn_auto-0df5e0",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "cf6e4726076e",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:55.262",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "cf6e4726076e",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:55.414",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "cf6e4726076e",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:55.414",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "cf6e4726076e",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:54.831",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:54.831",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:54.831",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-0df5e0 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:54.831",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:55.414",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-0df5e0, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:55.414",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-0df5e0' por mayor f1_macro (0.568492442433981) entre 2 agentes."
+              }
+            ]
+          },
+          {
+            "seed": 43,
+            "approach": "Centralizado",
+            "duration_s": 0.542,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.6164381963483637,
+            "selected": "KNN fijo (k=5)",
+            "run_id": "20261115-151455_case04-centralized-classificat_fa57e80e",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.6164381963483637
+              },
+              {
+                "label": "KNN automático",
+                "k": 5,
+                "f1_macro": 0.6164381963483637
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 43,
+            "approach": "MAS",
+            "duration_s": 0.5335,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.6164381963483637,
+            "selected": "knn_auto (k=5)",
+            "run_id": "20261115-151456_classification_236127f5",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-0df5e0",
+                "metric": "f1_macro",
+                "value": 0.6164381963483637,
+                "elapsed_s": 0.422
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.6164381963483637,
+                "elapsed_s": 0.1098
+              }
+            ],
+            "selected_agent": "knn_auto-0df5e0",
+            "candidate_agents": [
+              "knn_auto-0df5e0",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:56.031",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "61e7a4d34426",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.032",
+                "sender": "coordinador",
+                "receiver": "knn_auto-0df5e0",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "61e7a4d34426",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.454",
+                "sender": "knn_auto-0df5e0",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "61e7a4d34426",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.454",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "61e7a4d34426",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.564",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "61e7a4d34426",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.564",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "61e7a4d34426",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:56.031",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.031",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.031",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-0df5e0 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.031",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.564",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-0df5e0, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:56.564",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-0df5e0' por mayor f1_macro (0.6164381963483637) entre 2 agentes."
+              }
+            ]
+          },
+          {
+            "seed": 44,
+            "approach": "Centralizado",
+            "duration_s": 0.5869,
+            "interactions": 0,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.61069884367287,
+            "selected": "KNN fijo (k=5)",
+            "run_id": "20261115-151457_case04-centralized-classificat_45812f24",
+            "candidates": [
+              {
+                "label": "KNN fijo (k=5)",
+                "k": 5,
+                "f1_macro": 0.61069884367287
+              },
+              {
+                "label": "KNN automático",
+                "k": 5,
+                "f1_macro": 0.61069884367287
+              }
+            ],
+            "message_trace": []
+          },
+          {
+            "seed": 44,
+            "approach": "MAS",
+            "duration_s": 0.6119,
+            "interactions": 6,
+            "tasks_completed": 2,
+            "models_evaluated": 6,
+            "errors": 0,
+            "quality_metric": "f1_macro",
+            "quality": 0.61069884367287,
+            "selected": "knn_auto (k=5)",
+            "run_id": "20261115-151457_classification_fa2336c6",
+            "candidates": [
+              {
+                "agent_id": "knn_auto-0df5e0",
+                "metric": "f1_macro",
+                "value": 0.61069884367287,
+                "elapsed_s": 0.4571
+              },
+              {
+                "agent_id": "agente-clasificacion",
+                "metric": "f1_macro",
+                "value": 0.61069884367287,
+                "elapsed_s": 0.1507
+              }
+            ],
+            "selected_agent": "knn_auto-0df5e0",
+            "candidate_agents": [
+              "knn_auto-0df5e0",
+              "agente-clasificacion"
+            ],
+            "message_trace": [
+              {
+                "timestamp": "2026-11-15T15:14:57.239",
+                "sender": "controller",
+                "receiver": "coordinador",
+                "performative": "request",
+                "task": "classification",
+                "status": "processed",
+                "correlation_id": "5561d65767ba",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.239",
+                "sender": "coordinador",
+                "receiver": "knn_auto-0df5e0",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "5561d65767ba",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.696",
+                "sender": "knn_auto-0df5e0",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "5561d65767ba",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.697",
+                "sender": "coordinador",
+                "receiver": "agente-clasificacion",
+                "performative": "request",
+                "task": "classification.train",
+                "status": "processed",
+                "correlation_id": "5561d65767ba",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.847",
+                "sender": "agente-clasificacion",
+                "receiver": "coordinador",
+                "performative": "inform",
+                "task": "classification.train",
+                "status": "delivered",
+                "correlation_id": "5561d65767ba",
+                "error": null
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.848",
+                "sender": "coordinador",
+                "receiver": "controller",
+                "performative": "inform",
+                "task": "classification",
+                "status": "delivered",
+                "correlation_id": "5561d65767ba",
+                "error": null
+              }
+            ],
+            "decisions": [
+              {
+                "timestamp": "2026-11-15T15:14:57.239",
+                "decision": "Solicitud recibida",
+                "justification": "'controller' pidió la tarea 'classification'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.239",
+                "decision": "Capacidad requerida: classification.train",
+                "justification": "Tabla de enrutamiento (configuración): 'classification' → 'classification.train'."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.239",
+                "decision": "Descubrimiento: 2 candidato(s)",
+                "justification": "Registro consultado por capacidad: knn_auto-0df5e0 (prioridad 50, éxito 100%, idle), agente-clasificacion (prioridad 10, éxito 100%, idle)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.239",
+                "decision": "Política: fanout",
+                "justification": "Todos los candidatos ejecutan la tarea y se consolida el mejor resultado."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.847",
+                "decision": "Delegación completada",
+                "justification": "Respondieron: knn_auto-0df5e0, agente-clasificacion en 2 intento(s)."
+              },
+              {
+                "timestamp": "2026-11-15T15:14:57.847",
+                "decision": "Consolidación",
+                "justification": "Se eligió el resultado de 'knn_auto-0df5e0' por mayor f1_macro (0.61069884367287) entre 2 agentes."
+              }
+            ]
+          }
+        ]
+      },
+      "runs": {
+        "simple": [
+          "20261115-151448_clustering-kmeans_1d2cbfe1"
+        ],
+        "cooperation": [
+          "20261115-151453_eda_8b03f592",
+          "20261115-151453_classification_5096fcfc",
+          "20261115-151454_classification_c97ae13d",
+          "20261115-151454_classification_72fe485a"
+        ],
+        "conflict": [
+          "20261115-151455_classification_b6c1e678",
+          "20261115-151456_classification_236127f5",
+          "20261115-151457_classification_fa2336c6"
+        ]
+      },
+      "file": "water_potability.csv",
+      "description": "Potabilidad (clasificación binaria)"
+    }
+  ]
+}

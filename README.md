@@ -42,7 +42,7 @@ se conserva durante la sesión y puedes restaurarlo después de hacer cambios.
 | **Agrupamiento** | Reducir dimensiones o buscar grupos con K-Means y HAC; comparar métricas. |
 | **Clasificación** | Elegir la respuesta categórica, entrenar modelos y consultar métricas y errores por clase. |
 | **Regresión** | Elegir una respuesta numérica, probar modelos y comparar sus predicciones. |
-| **MAS** | Consultar agentes disponibles, sus mensajes y decisiones; crear y probar un agente. |
+| **MAS** | Consultar agentes disponibles, sus mensajes y decisiones; crear/probar agentes y ejecutar el Estudio de Caso 04. |
 | **Experimentos** | Consultar, comparar, descargar o eliminar ejecuciones guardadas. |
 
 Los valores ausentes de los predictores supervisados se completan dentro del proceso de entrenamiento, después de
@@ -74,6 +74,15 @@ Para repetir los benchmarks y generar las tablas, el manifiesto y las cuatro fig
 ```powershell
 python scripts/run_experiments.py
 ```
+
+Para ejecutar el Estudio de Caso 04 en tres conjuntos de datos y generar sus resultados textuales:
+
+```powershell
+python scripts/run_case04_experiments.py
+```
+
+El protocolo, las métricas y los archivos generados se explican en
+[la guía del Caso 04](docs/CASO04_INTEGRADO.md).
 
 Para compilar el [informe técnico en PDF](docs/technical_report.pdf), con arquitectura MAS, diagramas, resultados y
 bibliografía:

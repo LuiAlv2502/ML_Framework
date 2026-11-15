@@ -50,3 +50,26 @@ def test_ui_crea_agente_lo_prueba_y_guarda_mensajes_y_decision():
             for frame in prueba.dataframe
             for row in frame.value.to_dict("records")
         )
+
+
+def test_ui_ejecuta_el_estudio_caso04_desde_evaluacion():
+    with TemporaryDirectory() as directorio:
+        controlador = FrameworkController(persist=False, runs_dir=Path(directorio))
+        controlador.load_sample("drug200.csv")
+        prueba = AppTest.from_file(str(ROOT / "frontend" / "pages" / "agents.py"), default_timeout=60)
+        prueba.session_state["controller"] = controlador
+        prueba.run()
+
+        semillas = next(
+            selector for selector in prueba.multiselect
+            if selector.label == "Semillas para repetir las pruebas"
+        )
+        semillas.set_value([42])
+        next(
+            boton for boton in prueba.button
+            if boton.label == "Ejecutar los tres escenarios"
+        ).click().run()
+
+        assert not prueba.exception
+        assert len(controlador.list_experiments()) == 5
+        assert any("F1 macro medio" in frame.value.columns for frame in prueba.dataframe)

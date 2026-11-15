@@ -1,0 +1,19 @@
+﻿dataset,target,seed,approach,duration_s,interactions,tasks_completed,models_evaluated,errors,quality_metric,quality,selected,run_id
+drug200.csv,Drug,42,Centralizado,0.4511,0,2,6,0,f1_macro,0.8210752688172043,KNN automático,20261115-151438_case04-centralized-classificat_6c182a09
+drug200.csv,Drug,42,MAS,0.4691,6,2,6,0,f1_macro,0.8210752688172043,knn_auto (k=3),20261115-151438_classification_29f82737
+drug200.csv,Drug,43,Centralizado,0.3823,0,2,6,0,f1_macro,0.7639243498817967,KNN automático,20261115-151439_case04-centralized-classificat_351f3c73
+drug200.csv,Drug,43,MAS,0.5301,6,2,6,0,f1_macro,0.7639243498817967,knn_auto (k=11),20261115-151439_classification_1315211c
+drug200.csv,Drug,44,Centralizado,0.3722,0,2,6,0,f1_macro,0.9009607102630358,KNN automático,20261115-151440_case04-centralized-classificat_8364b0c5
+drug200.csv,Drug,44,MAS,0.5002,6,2,6,0,f1_macro,0.9009607102630358,knn_auto (k=3),20261115-151440_classification_7c013aa6
+diabetes.csv,Outcome,42,Centralizado,0.3437,0,2,6,0,f1_macro,0.7141439205955336,KNN automático,20261115-151446_case04-centralized-classificat_13cbc478
+diabetes.csv,Outcome,42,MAS,0.3403,6,2,6,0,f1_macro,0.7141439205955336,knn_auto (k=7),20261115-151446_classification_ad3ad5c7
+diabetes.csv,Outcome,43,Centralizado,0.3258,0,2,6,0,f1_macro,0.7189047752546491,KNN automático,20261115-151446_case04-centralized-classificat_f942c155
+diabetes.csv,Outcome,43,MAS,0.389,6,2,6,0,f1_macro,0.7189047752546491,knn_auto (k=3),20261115-151447_classification_bcd2bbc1
+diabetes.csv,Outcome,44,Centralizado,0.3209,0,2,6,0,f1_macro,0.6743791641429436,KNN fijo (k=5),20261115-151447_case04-centralized-classificat_9004fd88
+diabetes.csv,Outcome,44,MAS,0.319,6,2,6,0,f1_macro,0.6743791641429436,knn_auto (k=5),20261115-151448_classification_4e2aff56
+water_potability.csv,Potability,42,Centralizado,0.5257,0,2,6,0,f1_macro,0.568492442433981,KNN automático,20261115-151454_case04-centralized-classificat_83c8cb3d
+water_potability.csv,Potability,42,MAS,0.5844,6,2,6,0,f1_macro,0.568492442433981,knn_auto (k=3),20261115-151455_classification_b6c1e678
+water_potability.csv,Potability,43,Centralizado,0.542,0,2,6,0,f1_macro,0.6164381963483637,KNN fijo (k=5),20261115-151455_case04-centralized-classificat_fa57e80e
+water_potability.csv,Potability,43,MAS,0.5335,6,2,6,0,f1_macro,0.6164381963483637,knn_auto (k=5),20261115-151456_classification_236127f5
+water_potability.csv,Potability,44,Centralizado,0.5869,0,2,6,0,f1_macro,0.61069884367287,KNN fijo (k=5),20261115-151457_case04-centralized-classificat_45812f24
+water_potability.csv,Potability,44,MAS,0.6119,6,2,6,0,f1_macro,0.61069884367287,knn_auto (k=5),20261115-151457_classification_fa2336c6
