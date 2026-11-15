@@ -1,0 +1,98 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\title{Framework IA para análisis de datos}
+\author{Laboratorio de análisis de datos}
+\date{Noviembre de 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Resumen}
+Este proyecto proporciona una aplicación local para explorar datos, prepararlos y ejecutar análisis de
+agrupamiento, clasificación y regresión. La interfaz se implementa en Streamlit y utiliza
+\texttt{FrameworkController} como entrada al backend. El framework incluye servicios de datos, persistencia de
+experimentos y un sistema multiagente con coordinador, agentes especializados, fábrica y mensajería.
+
+\section{Arquitectura}
+El código se organiza en capas:
+\begin{itemize}[nosep]
+  \item \texttt{frontend/}: dashboard y páginas Streamlit.
+  \item \texttt{framework\_ia/controller.py}: coordinación entre interfaz y backend.
+  \item \texttt{framework\_ia/services/}: carga, transformación y registro de ejecuciones.
+  \item \texttt{framework\_ia/ml/}: operaciones de EDA, preprocesamiento y algoritmos de aprendizaje.
+  \item \texttt{framework\_ia/agents/}: agentes, agencia, coordinador, fábrica y mensajería.
+  \item \texttt{framework\_ia/persistence/}: almacenamiento de ejecuciones, configuración, modelos y agentes.
+  \item \texttt{framework\_ia/utils/}: validación, métricas, serialización, errores y logging.
+\end{itemize}
+La interfaz no importa directamente clases de algoritmos o agentes. El controlador valida solicitudes, utiliza los
+servicios y enruta las tareas a través del coordinador. Los resultados se guardan en \texttt{runs/}.
+
+\section{Flujo de datos}
+Los archivos se cargan localmente como CSV o Excel. \texttt{DatasetService} mantiene una copia original y una copia
+activa; las operaciones manuales y automáticas se aplican sobre la copia activa, que se puede restaurar. La carga
+valida formatos y límites configurados. Los pipelines supervisados ajustan imputación, codificación y escalado con
+los datos de entrenamiento, para evitar aprender esas transformaciones del conjunto de prueba.
+
+\section{Aprendizaje automático}
+El sistema reúne EDA y preprocesamiento reutilizables, reducción dimensional, agrupamiento, clasificación y
+regresión. Las tareas pueden ejecutarse manualmente o mediante el agente especializado. Los benchmarks del backend
+registran configuración y métricas para que sus resultados puedan consultarse y compararse desde la página
+\textbf{Experimentos}. Las métricas se interpretan según la tarea; por ejemplo, F1 macro para clasificación y RMSE
+para regresión.
+
+\section{Sistema multiagente}
+\texttt{BaseAgent} define identidad, capacidades, configuración, estado y estadísticas. \texttt{AgentRegistry}
+mantiene la lista de agentes disponibles; \texttt{AgentFactory} valida y crea tipos registrados o plugins.
+\texttt{Agency} gestiona ciclo de vida, asignación, reintentos y colaboración. \texttt{CoordinatorAgent} selecciona
+agentes compatibles y consolida respuestas. El bus transmite solicitudes y respuestas con identificadores de
+correlación.
+
+Los agentes especializados cubren EDA, agrupamiento, clasificación y regresión. Si se configura el proveedor de
+IA, el agente puede usarlo para proponer decisiones; de lo contrario, existen flujos basados en reglas para las
+tareas compatibles. Las capacidades y entradas se validan en Python antes de ejecutar algoritmos.
+
+\section{Persistencia y privacidad}
+Cada ejecución se guarda bajo \texttt{runs/<id>/}, con un resumen JSON, métricas CSV y mensajes JSONL. La página de
+experimentos permite filtrar, consultar, comparar, descargar y eliminar registros. El estado de agentes y modelos
+se guarda en las rutas locales configuradas.
+
+Los agentes de lenguaje reciben perfiles agregados y resultados resumidos, no filas completas del conjunto. El servicio
+de IA configurado puede estar sujeto a sus propias condiciones; no se deben incluir claves en el repositorio. La
+procedencia y licencia de los CSV preexistentes no está documentada, por lo que deben verificarse antes de
+redistribuirlos. El conjunto de regresión de ejemplo se genera sintéticamente con
+\texttt{scripts/generate\_regression\_sample.py}.
+
+\section{Instalación y operación}
+El paquete declara Python 3.11 como mínimo; la instalación fijada y probada se realizó con Python 3.13.7.
+La guía de instalación, configuración, navegación y pruebas está en
+\texttt{README.md}. En Windows, el flujo básico es:
+\begin{verbatim}
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
+\end{verbatim}
+Las versiones probadas se fijan en \texttt{requirements.txt}; las herramientas de desarrollo se declaran en
+\texttt{requirements-dev.txt}. La suite automatizada se ejecuta con \texttt{python -m pytest -q}.
+
+\section{Verificación}
+Las pruebas cubren validación, persistencia, servicios, arquitectura, mensajería, agencia, fábrica y agentes.
+También se ejecutan pruebas de apertura de las nuevas páginas Streamlit y de creación/eliminación dinámica de un
+agente de plugin. Los resultados de la validación de entrega se registran en \texttt{docs/EVIDENCIAS.md}.
+
+\section{Limitaciones}
+La calidad y pertinencia de las métricas dependen del conjunto y de la configuración elegida. El servicio de IA es
+opcional y requiere credenciales propias. La procedencia de los conjuntos de datos CSV heredados no está registrada.
+La visualización de los diagramas Mermaid requiere un visor compatible; sus fuentes están en
+\texttt{docs/DIAGRAMAS.md}.
+
+\end{document}
