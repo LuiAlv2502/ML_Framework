@@ -7,7 +7,7 @@ from streamlit.testing.v1 import AppTest
 from framework_ia.controller import FrameworkController
 
 ROOT = Path(__file__).resolve().parents[1]
-NEW_PAGES = ("home.py", "data.py", "preprocessing.py", "agents.py", "experiments.py")
+NEW_PAGES = ("home.py", "data.py", "preprocessing.py", "agents.py", "case04.py", "experiments.py")
 
 
 @pytest.mark.parametrize("filename", NEW_PAGES)

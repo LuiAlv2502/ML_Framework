@@ -23,6 +23,7 @@ def main() -> None:
             st.Page(f"{PAGINAS}/classification.py", title="Clasificación", icon=":material/category:"),
             st.Page(f"{PAGINAS}/prediction.py", title="Regresión", icon=":material/trending_up:"),
             st.Page(f"{PAGINAS}/agents.py", title="MAS", icon=":material/groups:"),
+            st.Page(f"{PAGINAS}/case04.py", title="Caso 04", icon=":material/science:"),
             st.Page(f"{PAGINAS}/experiments.py", title="Experimentos", icon=":material/science:"),
         ]
     )

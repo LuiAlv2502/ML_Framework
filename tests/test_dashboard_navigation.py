@@ -16,11 +16,12 @@ PAGINAS = (
     ("classification.py", "Clasificación"),
     ("prediction.py", "Regresión"),
     ("agents.py", "MAS"),
+    ("case04.py", "Caso 04"),
     ("experiments.py", "Experimentos"),
 )
 
 
-def test_navegacion_registra_nueve_paginas_y_abre_inicio():
+def test_navegacion_registra_paginas_y_abre_inicio():
     prueba = AppTest.from_file(str(APP)).run()
 
     assert not prueba.exception

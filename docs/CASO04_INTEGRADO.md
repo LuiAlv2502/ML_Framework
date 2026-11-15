@@ -1,7 +1,7 @@
 # Estudio de Caso 04 integrado
 
-El Caso 04 se ejecuta en el proyecto existente: la interfaz está dentro de **MAS > Evaluación** y el
-protocolo completo desde la raíz está en:
+El Caso 04 se ejecuta desde su página independiente **Caso 04** en el panel lateral. El protocolo
+completo desde la raíz está en:
 
 ```powershell
 python scripts/run_case04_experiments.py
