@@ -1,4 +1,4 @@
-"""An?lisis exploratorio, limpieza y transformaci?n de datos."""
+"""Análisis exploratorio, limpieza y transformación de datos."""
 
 from .dataframe import DataFrame
 

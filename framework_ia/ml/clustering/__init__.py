@@ -1,4 +1,4 @@
-"""Reducci?n de dimensionalidad y agrupamiento (no supervisado)."""
+"""Reducción de dimensionalidad y agrupamiento (no supervisado)."""
 
 from .clustering import ClusteringAnalysis
 from .pca import PCAAnalysis

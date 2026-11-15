@@ -9,19 +9,12 @@ from sklearn.ensemble import (
 	GradientBoostingClassifier,
 	RandomForestClassifier,
 )
-from sklearn.metrics import (
-	accuracy_score,
-	classification_report,
-	confusion_matrix,
-	f1_score,
-	precision_score,
-	recall_score,
-)
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils.multiclass import unique_labels
+
+from framework_ia.utils.metrics import classification_metrics
 
 from .supervised_base import SupervisadoBase
 
@@ -48,28 +41,7 @@ class _EncodedTargetClassifier(ClassifierMixin, BaseEstimator):
 
 class ClasificacionModelos(SupervisadoBase):
 	def evaluar_clasificacion(self, y_true, y_pred) -> dict[str, Any]:
-		labels = unique_labels(y_true, y_pred)
-		return {
-			"accuracy": float(accuracy_score(y_true, y_pred)),
-			"precision_macro": float(
-				precision_score(y_true, y_pred, average="macro", zero_division=0)
-			),
-			"recall_macro": float(
-				recall_score(y_true, y_pred, average="macro", zero_division=0)
-			),
-			"f1_macro": float(
-				f1_score(y_true, y_pred, average="macro", zero_division=0)
-			),
-			"confusion_matrix": confusion_matrix(
-				y_true,
-				y_pred,
-				labels=labels,
-			).tolist(),
-			"confusion_matrix_labels": [str(label) for label in labels],
-			"classification_report": classification_report(
-				y_true, y_pred, output_dict=True, zero_division=0
-			),
-		}
+		return classification_metrics(y_true, y_pred)
 
 	def _evaluar_modelo(self, model) -> dict[str, Any]:
 		fitted_model, split, y_pred = self._fit_predict(model)

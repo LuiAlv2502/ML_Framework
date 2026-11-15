@@ -1,3 +1,3 @@
-"""Agentes de terceros: cada m?dulo de este paquete se descubre autom?ticamente."""
+"""Agentes de terceros: cada módulo de este paquete se descubre automáticamente."""
 
 __all__: list[str] = []

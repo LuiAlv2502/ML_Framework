@@ -1,1 +1,1 @@
-"""Frontend Streamlit del framework (solo presentaci?n)."""
+"""Frontend Streamlit del framework (solo presentación)."""

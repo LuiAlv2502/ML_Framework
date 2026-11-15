@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import math
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Lasso, LassoCV, LinearRegression, Ridge, RidgeCV
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
 from framework_ia.ml.classification.supervised_base import SupervisadoBase
+from framework_ia.utils.metrics import regression_metrics
 
 
 # Familias de algoritmos para el benchmarking (Lab 3).
@@ -72,15 +71,7 @@ class RegresionModelos(SupervisadoBase):
     # ------------------------------------------------------------------
     def evaluar_regresion(self, y_true, y_pred) -> dict[str, float]:
         """RMSE, MAE y ER (como en la guía del profesor) + R²."""
-        y_true = np.asarray(y_true, dtype=float)
-        y_pred = np.asarray(y_pred, dtype=float)
-        suma_abs = np.sum(np.abs(y_true))
-        return {
-            "RMSE": float(math.sqrt(mean_squared_error(y_true, y_pred))),
-            "MAE": float(mean_absolute_error(y_true, y_pred)),
-            "ER": float(np.sum(np.abs(y_true - y_pred)) / suma_abs) if suma_abs else float("nan"),
-            "R2": float(r2_score(y_true, y_pred)),
-        }
+        return regression_metrics(y_true, y_pred)
 
     def resumen_variable_objetivo(self) -> dict[str, Any]:
         """Mínimo, cuartiles y máximo de la variable a predecir (sirve para

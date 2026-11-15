@@ -1,4 +1,4 @@
-"""Regresi?n supervisada."""
+"""Regresión supervisada."""
 
 from .regression import FAMILIAS, NOMBRES, RegresionModelos
 

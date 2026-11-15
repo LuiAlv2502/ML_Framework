@@ -1,7 +1,7 @@
-"""Capa de aprendizaje autom?tico del framework (backend).
+"""Capa de aprendizaje automático del framework (backend).
 
-Los algoritmos viven aqu? y nunca en el frontend. Se exponen los nombres p?blicos hist?ricos
-(en espa?ol) para mantener la compatibilidad con el c?digo de los laboratorios.
+Los algoritmos viven aquí y nunca en el frontend. Se exponen los nombres públicos históricos
+(en español) para mantener la compatibilidad con el código de los laboratorios.
 """
 
 from .classification import ClasificacionModelos, SplitData, SupervisadoBase

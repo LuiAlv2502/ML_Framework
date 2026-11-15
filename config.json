@@ -1,0 +1,23 @@
+{
+  "_comentario": "Configuración del framework. Las rutas relativas se resuelven desde la raíz del proyecto. Los valores omitidos usan DEFAULT_CONFIG (framework_ia/persistence/config_store.py).",
+  "random_state": 42,
+  "paths": {
+    "data_dir": "data",
+    "runs_dir": "runs",
+    "models_dir": "framework_ia/models",
+    "logs_dir": "logs",
+    "agents_state": "framework_ia/persistence/agents.json"
+  },
+  "limits": {
+    "max_rows": 200000,
+    "max_columns": 500,
+    "max_file_mb": 50
+  },
+  "coordinator": {
+    "default_policy": "priority",
+    "max_retries": 1
+  },
+  "llm": {
+    "enabled": true
+  }
+}
