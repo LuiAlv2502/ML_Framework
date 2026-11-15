@@ -48,18 +48,27 @@ se conserva durante la sesión y puedes restaurarlo después de hacer cambios.
 Los valores ausentes de los predictores supervisados se completan dentro del proceso de entrenamiento, después de
 separar los datos para prueba. Las filas sin respuesta conocida no se utilizan para entrenar.
 
-## Asistente de IA (opcional)
+## Configurar la API key de Gemini (opcional)
 
-Los análisis automáticos funcionan con reglas locales cuando no hay una clave configurada. Para habilitar el
-proveedor Gemini, define `GEMINI_API_KEY` en la terminal antes de iniciar la aplicación:
+Para usar Gemini con los agentes:
+
+1. Entra en [Google AI Studio](https://aistudio.google.com/apikey), inicia sesión y crea una API key.
+2. Abre PowerShell en la carpeta del proyecto y activa el entorno virtual.
+3. Escribe el siguiente comando, reemplazando `PEGA_TU_CLAVE_AQUI` por tu clave, y luego inicia la aplicación
+   **en esa misma terminal**:
 
 ```powershell
-$env:GEMINI_API_KEY = "tu_clave"
+.\.venv\Scripts\Activate.ps1
+$env:GEMINI_API_KEY = "PEGA_TU_CLAVE_AQUI"
 python -m streamlit run app.py
 ```
 
-No escribas la clave en archivos del proyecto, capturas ni commits. El proveedor externo puede aplicar sus propias
-condiciones y límites de uso.
+Si la aplicación ya estaba abierta, detenla con `Ctrl+C` y vuelve a iniciarla después de definir la clave. Esta
+configuración dura mientras esa terminal esté abierta; al abrir otra, debes volver a definirla.
+
+La clave es opcional: sin ella, o si Gemini no está disponible, los análisis compatibles usan reglas locales.
+No compartas tu clave ni la incluyas en archivos del proyecto, capturas o commits. Gemini requiere conexión a
+internet y puede tener límites de uso.
 
 ## Datos de ejemplo
 
