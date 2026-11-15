@@ -52,4 +52,14 @@ def get_logger(name: str = "") -> logging.Logger:
     return logging.getLogger(f"{LOGGER_NAME}.{name}")
 
 
-__all__ = ["configure_logging", "get_logger"]
+def close_logging() -> None:
+    """Cierra los archivos de log abiertos y permite configurar otra ruta después."""
+    global _configured_path
+    logger = logging.getLogger(LOGGER_NAME)
+    for handler in list(logger.handlers):
+        logger.removeHandler(handler)
+        handler.close()
+    _configured_path = None
+
+
+__all__ = ["close_logging", "configure_logging", "get_logger"]

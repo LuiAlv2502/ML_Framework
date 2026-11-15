@@ -1,0 +1,11 @@
+﻿........................................................................ [ 32%]
+........................................................................ [ 64%]
+........................................................................ [ 96%]
+.........                                                                [100%]
+============================== warnings summary ===============================
+tests/test_mvc.py::test_embeddings_tienen_dos_dimensiones[umap_embedding-parametros1]
+  C:\Users\luisa_22a1fvx\Desktop\IA_Laboratorios\.venv\Lib\site-packages\umap\umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+    warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+225 passed, 1 warning in 40.37s
