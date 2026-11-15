@@ -8,7 +8,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_DIRS = {
-    ".git", ".idea", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".venv", "venv",
+    ".git", ".idea", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".venv", "venv", "env", "python",
     "__pycache__", "build", "dist", "htmlcov", "logs", "runs", "framework_ia.egg-info",
 }
 EXCLUDED_FILES = {".coverage", ".env", "secrets.toml"}

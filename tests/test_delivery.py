@@ -30,9 +30,12 @@ def test_paquete_excluye_entornos_y_archivos_generados(tmp_path):
     raiz = tmp_path / "proyecto"
     (raiz / "src").mkdir(parents=True)
     (raiz / ".venv" / "Scripts").mkdir(parents=True)
+    (raiz / "Python" / "Lib" / "site-packages").mkdir(parents=True)
     (raiz / "runs" / "run-1").mkdir(parents=True)
     (raiz / "src" / "app.py").write_text("print('ok')", encoding="utf-8")
     (raiz / ".venv" / "Scripts" / "python.exe").write_bytes(b"fake")
+    (raiz / "Python" / "pyvenv.cfg").write_text("home = C:/Python", encoding="utf-8")
+    (raiz / "Python" / "Lib" / "site-packages" / "pip.py").write_text("fake", encoding="utf-8")
     (raiz / "runs" / "run-1" / "run.json").write_text("{}", encoding="utf-8")
     (raiz / "secrets.toml").write_text("token = 'no incluir'", encoding="utf-8")
     (raiz / "framework_ia" / "persistence").mkdir(parents=True)

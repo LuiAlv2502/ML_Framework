@@ -2,6 +2,14 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $docs = Join-Path $root "docs"
 $log = Join-Path $docs "technical_report-build.log"
+$venvPython = Join-Path $root ".venv\Scripts\python.exe"
+$python = if (Test-Path $venvPython) { $venvPython } else { (Get-Command python -ErrorAction Stop).Source }
+$diagramScript = Join-Path $root "scripts\generate_report_diagrams.py"
+& $python $diagramScript
+if ($LASTEXITCODE -ne 0) {
+    throw "No se pudieron generar los diagramas del informe."
+}
+
 $command = Get-Command pdflatex -ErrorAction SilentlyContinue
 $localMiktex = Join-Path $env:LOCALAPPDATA "Programs\MiKTeX\miktex\bin\x64\pdflatex.exe"
 if ($command) {

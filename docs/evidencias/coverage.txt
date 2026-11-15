@@ -4,12 +4,12 @@
 .........                                                                [100%]
 ============================== warnings summary ===============================
 tests/test_mvc.py::test_embeddings_tienen_dos_dimensiones[umap_embedding-parametros1]
-  C:\Users\luisa_22a1fvx\Desktop\IA_Laboratorios\.venv\Lib\site-packages\umap\umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  C:\Universidad\IA\IA_Laboratorios\.venv\Lib\site-packages\umap\umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
     warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =============================== tests coverage ================================
-_______________ coverage: platform win32, python 3.13.7-final-0 _______________
+_______________ coverage: platform win32, python 3.13.9-final-0 _______________
 
 Name                                                Stmts   Miss  Cover   Missing
 ---------------------------------------------------------------------------------
@@ -21,10 +21,10 @@ framework_ia\agents\agent_factory.py                  126      9    93%   99, 13
 framework_ia\agents\base_agent.py                     150      3    98%   73, 173, 237
 framework_ia\agents\bootstrap.py                       31      0   100%
 framework_ia\agents\classification_agent.py            88     10    89%   70, 137-140, 161-162, 169, 198-199
-framework_ia\agents\clustering_agent.py               408     75    82%   43, 45, 47, 142, 163, 205, 215-218, 224, 288, 290, 299, 302, 305, 309, 313-314, 399, 404-405, 442-444, 464-466, 471, 495, 521-522, 584, 675, 704-719, 727, 730, 739, 745-747, 754, 757, 780, 784-789, 793-797, 806-810, 815, 828-830
+framework_ia\agents\clustering_agent.py               408     67    84%   43, 45, 47, 142, 163, 217, 224, 288, 290, 299, 302, 305, 309, 313-314, 399, 442-444, 464-466, 471, 491, 573, 675, 704-719, 727, 730, 739, 745-747, 754, 757, 780, 784-789, 793-797, 806-810, 815, 828-830
 framework_ia\agents\coordinator_agent.py              120      2    98%   76, 128
 framework_ia\agents\eda_agent.py                      597     69    88%   77, 79, 81, 85, 122, 264, 271, 304, 306, 342, 398-401, 448, 531, 536, 580, 585, 645-660, 731, 763, 765, 767, 816, 819, 821, 828, 833-834, 903, 914, 929, 1017, 1050-1051, 1055-1062, 1070, 1073, 1077-1089
-framework_ia\agents\llm.py                            127     34    73%   38-39, 42-43, 53-56, 62-69, 77, 84, 87, 91, 95-97, 119, 126-128, 163-164, 173-174, 180-181, 183, 215
+framework_ia\agents\llm.py                            127     25    80%   38-39, 42-43, 53-56, 62-69, 84, 91, 119, 173-174, 180-181, 183, 215
 framework_ia\agents\messaging.py                      128      2    98%   201-202
 framework_ia\agents\plugins\__init__.py                 1      0   100%
 framework_ia\agents\plugins\knn_auto.py                26      0   100%
@@ -67,5 +67,5 @@ framework_ia\utils\paths.py                             8      0   100%
 framework_ia\utils\serialization.py                    95     20    79%   29, 53, 55, 57, 59, 72-73, 77, 83-90, 96, 106, 108, 124
 framework_ia\utils\validation.py                      129      7    95%   49, 56, 75, 80, 122, 159, 181
 ---------------------------------------------------------------------------------
-TOTAL                                                5004    845    83%
-225 passed, 1 warning in 60.82s (0:01:00)
+TOTAL                                                5004    828    83%
+225 passed, 1 warning in 126.31s (0:02:06)

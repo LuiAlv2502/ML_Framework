@@ -21,23 +21,23 @@ Demostración generada por `python scripts/demo_dynamic_agent.py` con `drug200.c
 | agente-agrupamiento | Agente de agrupamiento | clustering | clustering.auto, clustering.benchmark, clustering.dendrogram, clustering.elbow, clustering.hac, clustering.kmeans, clustering.pca, clustering.tsne, clustering.umap |
 | agente-clasificacion | Agente de clasificación | classification | classification.auto, classification.benchmark, classification.train |
 | agente-regresion | Agente de regresión | regression | regression.auto, regression.benchmark, regression.train |
-| knn_auto-04b065 | KNN automático de evidencia | knn_auto | classification.train |
+| knn_auto-c2a315 | KNN automático de evidencia | knn_auto | classification.train |
 
 ## Decisión del coordinador para `classification.train`
 
 - Política: `priority`
-- Candidatos: knn_auto-04b065, agente-clasificacion
-- Agente elegido: `knn_auto-04b065`
-- ID de ejecución temporal: `20261115-121531_classification-train_9e57534d`
+- Candidatos: knn_auto-c2a315, agente-clasificacion
+- Agente elegido: `knn_auto-c2a315`
+- ID de ejecución temporal: `20261115-132417_classification-train_0c4dc86e`
 
 ## Mensajes intercambiados
 
 | Hora | Emisor | Receptor | Tarea | Estado | Conversación |
 |---|---|---|---|---|---|
-| 2026-11-15T12:15:31.183 | controller | coordinador | classification.train | processed | 4fff6a12206c |
-| 2026-11-15T12:15:31.183 | coordinador | knn_auto-04b065 | classification.train | processed | 4fff6a12206c |
-| 2026-11-15T12:15:31.318 | knn_auto-04b065 | coordinador | classification.train | delivered | 4fff6a12206c |
-| 2026-11-15T12:15:31.319 | coordinador | controller | classification.train | delivered | 4fff6a12206c |
+| 2026-11-15T13:24:16.687 | controller | coordinador | classification.train | processed | 2014987b5ad3 |
+| 2026-11-15T13:24:16.687 | coordinador | knn_auto-c2a315 | classification.train | processed | 2014987b5ad3 |
+| 2026-11-15T13:24:17.026 | knn_auto-c2a315 | coordinador | classification.train | delivered | 2014987b5ad3 |
+| 2026-11-15T13:24:17.026 | coordinador | controller | classification.train | delivered | 2014987b5ad3 |
 
 ## Integridad del núcleo
 

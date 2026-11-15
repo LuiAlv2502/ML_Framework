@@ -75,13 +75,15 @@ Para repetir los benchmarks y generar las tablas, el manifiesto y las cuatro fig
 python scripts/run_experiments.py
 ```
 
-Para compilar el [informe técnico en PDF](docs/technical_report.pdf), con resultados y bibliografía:
+Para compilar el [informe técnico en PDF](docs/technical_report.pdf), con arquitectura MAS, diagramas, resultados y
+bibliografía:
 
 ```powershell
 .\scripts\build_report.ps1
 ```
 
-La metodología y los archivos generados se explican en [docs/resultados/README.md](docs/resultados/README.md).
+El script genera también los diagramas del informe. La metodología y los archivos de resultados se explican en
+[docs/resultados/README.md](docs/resultados/README.md) y las fuentes de los diagramas en [docs/DIAGRAMAS.md](docs/DIAGRAMAS.md).
 La compilación del PDF requiere la herramienta TeX indicada en Requisitos.
 
 ## Pruebas y evidencias
@@ -94,6 +96,17 @@ python -m pytest -q
 El segundo comando guarda la salida de pruebas y cobertura en [docs/evidencias/](docs/evidencias/README.md).
 La cobertura se ejecuta con `pytest-cov`. Las capturas visuales de la interfaz son manuales y sus pasos están en
 [docs/evidencias/CAPTURAS.md](docs/evidencias/CAPTURAS.md).
+
+## Paquete de entrega
+
+El generador excluye entornos virtuales, archivos de ejecución y secretos. Cuando el equipo confirme las
+condiciones de redistribución de los datos y el nombre solicitado por el profesor, puede crear el archivo con:
+
+```powershell
+python scripts/package_project.py --output .\dist\nombre-de-entrega.zip
+```
+
+No entregues el ZIP hasta comprobar el nombre requerido y la licencia/procedencia de los conjuntos de datos.
 
 ## Estructura principal
 

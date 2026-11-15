@@ -20,10 +20,10 @@
 \maketitle
 \begin{abstract}
 Se presenta una aplicación local para explorar y preparar conjuntos de datos y ejecutar análisis de agrupamiento,
-clasificación y regresión. El sistema combina una interfaz Streamlit, un controlador, servicios reutilizables y
-agentes especializados. Se describen tres experimentos reproducibles con semillas fijas y sin servicio externo de
-IA: clasificación de medicamentos, predicción de un ingreso sintético y segmentación de clientes. Los resultados
-se generan con el mismo flujo de trabajo de la aplicación y se acompañan de tablas y cuatro figuras.
+clasificación y regresión. El sistema integra una interfaz Streamlit, un controlador, servicios reutilizables y un
+sistema multiagente con coordinador, registro, fábrica, mensajería y agentes especializados. Se describen la
+arquitectura, el ciclo de una solicitud, la extensión dinámica y la trazabilidad, además de tres experimentos
+reproducibles de aprendizaje automático. Los resultados se generan con el mismo backend que utiliza la aplicación.
 \end{abstract}
 \tableofcontents
 \newpage
@@ -39,12 +39,83 @@ El proyecto se organiza en capas; la interfaz se construye con Streamlit \citep{
   \item \texttt{framework\_ia/controller.py}: coordinación entre interfaz y backend.
   \item \texttt{framework\_ia/services/}: carga, transformación y registro de ejecuciones.
   \item \texttt{framework\_ia/ml/}: EDA, preprocesamiento y algoritmos de aprendizaje.
-  \item \texttt{framework\_ia/agents/}: coordinador y agentes especializados.
+  \item \texttt{framework\_ia/agents/}: agencia, coordinador, registro, fábrica, bus y agentes especializados.
   \item \texttt{framework\_ia/persistence/}: almacenamiento local de experimentos y configuración.
 \end{itemize}
 Los algoritmos y transformaciones se implementan con bibliotecas científicas de Python \citep{pedregosa2011scikit}.
 Para los experimentos de este informe se desactivó el servicio externo de IA; por tanto, no se requieren claves ni
 conexión a un proveedor para reproducir los resultados.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{05_arquitectura_mas.png}
+  \caption{Capas de la aplicación y recorrido de una solicitud desde Streamlit hasta los agentes y el backend ML.}
+  \label{fig:arquitectura-mas}
+\end{figure}
+
+\section{Diseño e implementación del sistema multiagente}
+La arquitectura sigue el enfoque de agentes autónomos que cooperan mediante mensajes y servicios especializados;
+la teoría de agentes distingue sus propiedades, arquitecturas y formas de interacción \citep{wooldridge1995agents}.
+En esta implementación, cada agente expone una identidad, un estado y un conjunto de capacidades. El coordinador
+resuelve la capacidad requerida a partir de la tarea, consulta el registro y delega sin depender de las clases
+concretas de los agentes.
+
+\subsection{Roles y capacidades}
+\begin{center}
+\small
+\begin{tabular}{p{0.20\textwidth}p{0.31\textwidth}p{0.39\textwidth}}
+\toprule
+Componente & Responsabilidad & Capacidades principales \\
+\midrule
+Coordinador & Analiza solicitudes, descubre candidatos, delega y consolida resultados. &
+\texttt{coordination.route} \\
+Agente EDA & Perfila, resume, limpia y prepara los datos. &
+\texttt{eda.profile}, \texttt{eda.summary}, \texttt{eda.clean}, \texttt{eda.preprocess} \\
+Agente de agrupamiento & Ejecuta reducción dimensional, clustering y benchmarks. &
+\texttt{clustering.pca}, \texttt{clustering.kmeans}, \texttt{clustering.hac}, \texttt{clustering.benchmark} \\
+Agente de clasificación & Entrena clasificadores y compara configuraciones. &
+\texttt{classification.train}, \texttt{classification.benchmark}, \texttt{classification.auto} \\
+Agente de regresión & Entrena regresores y compara configuraciones. &
+\texttt{regression.train}, \texttt{regression.benchmark}, \texttt{regression.auto} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Mensajería, coordinación y manejo de fallos}
+Las solicitudes usan mensajes estructurados con emisor, receptor, tarea, performativa, contenido y un identificador
+de correlación. El bus entrega y registra las solicitudes y respuestas; el identificador permite relacionar los
+mensajes de una misma ejecución. El flujo de la Figura~\ref{fig:secuencia-mas} muestra cómo se conserva esta
+trazabilidad hasta la presentación del resultado.
+
+La agencia aplica una política \texttt{priority} para asignar la tarea al candidato mejor clasificado y probar otro
+si el primero falla. Con \texttt{fanout}, todos los candidatos disponibles ejecutan la misma capacidad y el
+coordinador compara sus métricas principales para escoger una respuesta. La ejecución es síncrona. Los agentes
+mantienen estado de ciclo de vida y estadísticas de tareas; los experimentos guardan los agentes, decisiones,
+métricas y mensajes de cada solicitud. Los errores de validación se devuelven al usuario y los fallos de ejecución
+pueden provocar reintentos, fallback y degradación del estado del agente.
+
+\subsection{Extensibilidad e integración}
+La fábrica crea agentes desde tipos registrados y descubre plugins en
+\texttt{framework\_ia/agents/plugins/}. Un plugin publica sus capacidades y se incorpora al registro y al bus;
+el coordinador puede encontrarlo mediante la capacidad solicitada sin modificar su lógica central.
+\texttt{docs/evidencias/dynamic\_agent\_log.md} registra una prueba con \texttt{knn\_auto}: el agente se crea en
+ejecución y es seleccionado para \texttt{classification.train}. Las pruebas de integración ejercitan el recorrido
+controlador--coordinador--agente--modelo y verifican el almacenamiento del resultado; una prueba de interfaz
+comprueba la creación y prueba guiada desde el panel MAS.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{06_componentes_mas.png}
+  \caption{Relación entre la agencia, el contrato común \texttt{BaseAgent} y los agentes especializados.}
+  \label{fig:componentes-mas}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{07_secuencia_mas.png}
+  \caption{Secuencia de una tarea: enrutamiento, selección por capacidad, ejecución, persistencia y respuesta.}
+  \label{fig:secuencia-mas}
+\end{figure}
 
 \section{Datos y diseño experimental}
 \subsection{Clasificación}
@@ -129,11 +200,25 @@ externo y debe confirmarse antes de redistribuirlos. El conjunto de regresión e
 de las columnas, la partición y los parámetros elegidos; no deben interpretarse como evidencia causal ni como
 garantía de rendimiento en producción.
 
+\section{Conclusiones}
+El proyecto integra en una sola aplicación la carga y preparación de datos, los análisis de aprendizaje automático,
+la coordinación multiagente y la presentación de resultados. La separación entre controlador, servicios, backend
+ML y agentes permite que las páginas del dashboard soliciten análisis sin instanciar directamente los modelos.
+El registro por capacidad, el bus de mensajes y la fábrica ofrecen un mecanismo de extensión y trazabilidad que
+se verifica con pruebas automatizadas y una demostración de plugin dinámico.
+
+Los benchmarks reproducibles muestran que el flujo analítico funciona con semillas y configuraciones registradas,
+pero no representan una garantía de rendimiento fuera de los conjuntos evaluados. Como trabajo pendiente para una
+entrega pública, deben confirmarse las condiciones de uso de los datos heredados y generarse el paquete final con
+el nombre requerido por el curso.
+
 \section{Verificación}
-La suite automatizada del proyecto se documenta en \url{docs/evidencias/README.md}; el script de experimentos
-puede ejecutarse independientemente de las pruebas. Las fuentes CSV de entrada, configuraciones, semillas,
-versiones de Python y hashes SHA-256 se registran en \url{docs/resultados/resultados.json}. Las referencias
-metodológicas se incluyen a continuación.
+La suite automatizada, la cobertura y la demostración de creación dinámica se documentan en
+\url{docs/evidencias/README.md}. Las pruebas cubren la mensajería, el registro, el coordinador, el ciclo de vida,
+los fallos, la extensión dinámica y la integración del dashboard con el backend. El script de experimentos genera
+tablas, figuras y un manifiesto con los conjuntos de entrada, configuraciones, semillas, versión de Python y hashes
+SHA-256 en \url{docs/resultados/resultados.json}. Los comandos de generación se describen en el README del
+repositorio. Las referencias metodológicas se incluyen a continuación.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

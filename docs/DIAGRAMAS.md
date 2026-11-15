@@ -1,5 +1,15 @@
 # Diagramas del framework
 
+Los diagramas editables se mantienen como Mermaid en este archivo. Para generar las imágenes insertadas en el
+informe técnico, desde la raíz del proyecto ejecuta:
+
+```powershell
+python scripts/generate_report_diagrams.py
+```
+
+El comando crea `05_arquitectura_mas.png`, `06_componentes_mas.png` y `07_secuencia_mas.png` en
+`docs/resultados/figures/`; `scripts/build_report.ps1` los regenera automáticamente antes de compilar el PDF.
+
 ## Arquitectura por capas
 
 ```mermaid
@@ -52,6 +62,7 @@ classDiagram
     Agency *-- AgentFactory
     Agency *-- MessageBus
     Agency --> CoordinatorAgent
+    BaseAgent <|-- CoordinatorAgent
     BaseAgent <|-- EDAAgent
     BaseAgent <|-- ClusteringAgent
     BaseAgent <|-- ClassificationAgent

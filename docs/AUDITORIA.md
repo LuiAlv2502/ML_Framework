@@ -5,7 +5,7 @@
 Esta auditoría describe el estado de la aplicación y sus entregables después de completar los bloques A–E. La
 validación automatizada más reciente registró **225 pruebas aprobadas** y una advertencia conocida de UMAP
 relacionada con la configuración de `random_state` y `n_jobs`. La cobertura total de `framework_ia` fue **83 %**;
-agentes: **88.6 %**, servicios: **91.0 %**, persistencia: **92.4 %**. `pip check` no encontró dependencias
+agentes: **89.2 %**, servicios: **91.0 %**, persistencia: **92.4 %**. `pip check` no encontró dependencias
 incompatibles.
 
 El entorno validado fue Windows con Python 3.13.7. `pyproject.toml` declara Python 3.11 como mínimo, pero en esta
@@ -21,11 +21,11 @@ entrega no se ejecutó una matriz de pruebas para todas las versiones admitidas.
 | Sistema multiagente | Completo | Coordinador, agentes especializados, creación de plugins, mensajes y registro de decisiones. |
 | Pruebas y cobertura | Completo | `docs/evidencias/pytest_output.txt` y `docs/evidencias/coverage.txt`. |
 | Experimentos reproducibles | Completo | Script, CSV de resultados, manifiesto con semillas y hashes, y cuatro figuras en `docs/resultados/`. |
-| Informe técnico | Completo | Fuente LaTeX, bibliografía y PDF compilado de seis páginas en `docs/technical_report.pdf`. |
+| Informe técnico | Fuente actualizada; PDF pendiente de recompilar | La fuente LaTeX incluye diseño MAS, integración, conclusiones y siete figuras; compilar con `scripts/build_report.ps1`. El PDF existente podría no reflejar los cambios actuales. |
 | Guía y dependencias | Completo | README actualizado; versiones de ejecución fijadas en `requirements.txt` y herramientas de desarrollo separadas. |
-| Capturas de la interfaz | Pendiente manual | `docs/evidencias/CAPTURAS.md` describe las capturas requeridas; no se incluyen imágenes simuladas. |
-| Procedencia y licencias de CSV heredados | Pendiente de confirmación | Los metadatos de origen no están disponibles en el repositorio. |
-| Paquete ZIP | Excluido por solicitud | No se generará ni validará un ZIP de entrega. |
+| Capturas de la interfaz | Pendiente manual | `docs/evidencias/CAPTURAS.md` describe las capturas complementarias; no se incluyen imágenes simuladas. |
+| Procedencia y licencias de CSV heredados | Pendiente de confirmación | Los metadatos de origen no están disponibles en el repositorio; confirmar antes de redistribuir. |
+| Paquete ZIP | Pendiente de entrega | El generador excluye entornos virtuales; falta confirmar licencias y el nombre indicado por el profesor. |
 
 ## Algoritmos y parámetros
 
