@@ -1,2 +1,42 @@
+﻿# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Cachés de Python
 __pycache__/
 *.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Cobertura
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Secretos
+.env
+
+# Artefactos generados por el framework
+runs/
+logs/
+*.log
+framework_ia/models/*.joblib
+framework_ia/models/*.json
+framework_ia/persistence/agents.json
+informe_*.html
+dataframe_guardado.csv
+resultados_eda.csv
+
+# Entregables generados
+*.zip
