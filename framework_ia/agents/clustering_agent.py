@@ -1,4 +1,9 @@
-"""Agente que coordina análisis no supervisados con herramientas controladas."""
+"""Agente de agrupamiento.
+
+- ``AgenteNoSupervisado``: agente de los laboratorios que orquesta PCA y clustering con LLM opcional.
+- ``ClusteringAgent``: adaptador del MAS que publica las capacidades ``clustering.*`` y administra
+  PCA, K-Means, HAC, t-SNE, UMAP, método del codo, dendrograma y el benchmark de configuraciones.
+"""
 from __future__ import annotations
 
 import html
@@ -8,10 +13,18 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from framework_ia.ml.clustering.benchmark import LINKAGES, MAX_FILAS_HAC, default_configs
 from framework_ia.ml.clustering.clustering import ClusteringAnalysis
 from framework_ia.ml.clustering.pca import PCAAnalysis
+from framework_ia.utils.exceptions import ValidationError
+from framework_ia.utils.metrics import clustering_metrics
+from framework_ia.utils.serialization import figure_to_png_bytes
+from framework_ia.utils.validation import validate_columns, validate_params
 
-from . import llm
+from . import _support, llm
+from .agent_factory import agent_type
+from .base_agent import BaseAgent
+from .messaging import Message
 
 
 class AgenteNoSupervisado:
@@ -621,3 +634,210 @@ class AgenteNoSupervisado:
             ]
         )
         return "\n".join(partes)
+
+
+# ======================================================================
+# Adaptador MAS
+# ======================================================================
+PARAMS_CLUSTERING: dict[str, dict[str, tuple]] = {
+    "clustering.pca": {"n_components": ("entero", 1, 50), "whiten": ("booleano",),
+                       "svd_solver": ("opcion", ["auto", "full", "randomized"])},
+    "clustering.kmeans": {"n_clusters": ("entero", 2, 20), "init": ("opcion", ["k-means++", "random"]),
+                          "n_init": ("entero", 1, 50)},
+    "clustering.hac": {"n_clusters": ("entero", 2, 20), "linkage": ("opcion", list(LINKAGES)),
+                       "metric": ("opcion", ["euclidean", "manhattan", "cosine"])},
+    "clustering.tsne": {"n_components": ("entero", 2, 3), "perplexity": ("real", 2.0, 100.0)},
+    "clustering.umap": {"n_components": ("entero", 2, 3), "n_neighbors": ("entero", 2, 200),
+                        "min_dist": ("real", 0.0, 1.0)},
+    "clustering.elbow": {"k_max": ("entero", 2, 20)},
+    "clustering.dendrogram": {"method": ("opcion", list(LINKAGES))},
+    "clustering.benchmark": {"k_min": ("entero", 2, 20), "k_max": ("entero", 2, 20), "hac_k": ("entero", 2, 20)},
+    "clustering.auto": {},
+}
+
+
+@agent_type("clustering", description="Reducción de dimensionalidad y agrupamiento (PCA, K-Means, HAC, "
+                                      "t-SNE, UMAP) y benchmark de configuraciones.")
+class ClusteringAgent(BaseAgent):
+    """Agente especializado en análisis no supervisado (envuelve ``PCAAnalysis``/``ClusteringAnalysis``)."""
+
+    default_capabilities = frozenset(PARAMS_CLUSTERING)
+    supported_capabilities = default_capabilities
+    config_schema = {"use_llm": ("booleano",)}
+
+    def _execute(self, message: Message) -> dict[str, Any]:
+        datos = self.require_data(message)
+        payload = message.payload
+        columnas = payload.get("columns")
+        if columnas is not None:
+            columnas = validate_columns(datos, columnas)
+            if not columnas:
+                raise ValidationError("Seleccione al menos una columna.")
+        parametros = validate_params(payload.get("params"), PARAMS_CLUSTERING[message.task], owner=message.task)
+        accion = message.task.split(".", 1)[1]
+        resultado = getattr(self, f"_{accion}")(datos, columnas, parametros, payload)
+        resultado.update({"task": message.task, "params": parametros, "agent": self.agent_id})
+        return resultado
+
+    # ------------------------------------------------------------------
+    # Reducción de dimensionalidad
+    # ------------------------------------------------------------------
+    def _pca(self, datos: pd.DataFrame, columnas: list[Any] | None, params: dict[str, Any],
+             payload: dict[str, Any]) -> dict[str, Any]:
+        analisis = PCAAnalysis(datos)
+        matriz, _ = _support.ml_call(analisis.preparar_datos_numericos, columnas)
+        n = min(params.get("n_components", 2), matriz.shape[0], matriz.shape[1])
+        resultado = _support.ml_call(analisis.pca, n_components=n, whiten=params.get("whiten", False),
+                                     svd_solver=params.get("svd_solver", "auto"), columnas=columnas)
+        return {
+            "algorithm": "PCA",
+            "components": resultado["componentes"],
+            "explained_variance": [float(v) for v in resultado["varianza_explicada"]],
+            "cumulative_variance": [float(v) for v in resultado["varianza_acumulada"]],
+            "loadings": resultado["cargas"],
+            "metrics": {"varianza_acumulada": float(resultado["metrica"])},
+            "primary_metric": _support.primary("varianza_acumulada", resultado["metrica"], True),
+        }
+
+    def _embedding(self, metodo: str, datos: pd.DataFrame, columnas: list[Any] | None,
+                   params: dict[str, Any]) -> dict[str, Any]:
+        analisis = ClusteringAnalysis(datos)
+        if metodo == "tsne":
+            perplexity = params.get("perplexity", 30.0)
+            if perplexity >= len(datos):
+                raise ValidationError(f"La perplexity ({perplexity}) debe ser menor que el número de filas ({len(datos)}).")
+            embedding = _support.ml_call(analisis.tsne, n_components=params.get("n_components", 2),
+                                         perplexity=perplexity, columnas=columnas)
+        else:
+            vecinos = params.get("n_neighbors", 15)
+            if vecinos >= len(datos):
+                raise ValidationError(f"n_neighbors ({vecinos}) debe ser menor que el número de filas ({len(datos)}).")
+            embedding = _support.ml_call(analisis.umap_embedding, n_components=params.get("n_components", 2),
+                                         n_neighbors=vecinos, min_dist=params.get("min_dist", 0.1), columnas=columnas)
+        confianza = float(embedding.attrs["trustworthiness"])
+        tabla = pd.DataFrame(embedding.to_numpy(), columns=embedding.columns)
+        return {
+            "algorithm": "t-SNE" if metodo == "tsne" else "UMAP",
+            "embedding": tabla,
+            "metrics": {"trustworthiness": confianza},
+            "primary_metric": _support.primary("trustworthiness", confianza, True),
+        }
+
+    def _tsne(self, datos, columnas, params, payload):  # noqa: ANN001, ANN202
+        return self._embedding("tsne", datos, columnas, params)
+
+    def _umap(self, datos, columnas, params, payload):  # noqa: ANN001, ANN202
+        return self._embedding("umap", datos, columnas, params)
+
+    # ------------------------------------------------------------------
+    # Agrupamiento
+    # ------------------------------------------------------------------
+    def _agrupar(self, metodo: str, datos: pd.DataFrame, columnas: list[Any] | None, params: dict[str, Any],
+                 payload: dict[str, Any]) -> dict[str, Any]:
+        k = params.get("n_clusters", 3)
+        if k >= len(datos):
+            raise ValidationError(f"El número de grupos ({k}) debe ser menor que el número de filas ({len(datos)}).")
+        analisis = ClusteringAnalysis(datos)
+        matriz, _ = _support.ml_call(analisis.preparar_datos_numericos, columnas)
+        if metodo == "kmeans":
+            resultado = _support.ml_call(analisis.kmeans, columnas=columnas, **params)
+        else:
+            if len(datos) > MAX_FILAS_HAC:
+                raise ValidationError(f"HAC se limita a {MAX_FILAS_HAC} filas por su costo computacional.")
+            resultado = _support.ml_call(analisis.hac, columnas=columnas, **params)
+        con_grupo = resultado["resultado"]
+        etiquetas = con_grupo["cluster"].to_numpy()
+        metricas = clustering_metrics(matriz, etiquetas)
+        if "inercia" in resultado:
+            metricas["inercia"] = float(resultado["inercia"])
+        if "correlacion_cofenetica" in resultado:
+            metricas["correlacion_cofenetica"] = float(resultado["correlacion_cofenetica"])
+        dimensiones = int(payload.get("projection_dims", 2))
+        if dimensiones not in (2, 3):
+            raise ValidationError("projection_dims debe ser 2 o 3.")
+        dimensiones = min(dimensiones, matriz.shape[1])
+        proyeccion = _support.ml_call(PCAAnalysis(datos).pca, n_components=dimensiones, columnas=columnas)
+        puntos = proyeccion["componentes"].copy()
+        puntos["cluster"] = etiquetas.astype(str)
+        numericas = con_grupo.select_dtypes(include=np.number).columns.drop("cluster", errors="ignore")
+        return {
+            "algorithm": "K-Means" if metodo == "kmeans" else "HAC",
+            "labels": etiquetas.tolist(),
+            "data_with_cluster": con_grupo,
+            "sizes": {int(g): int(c) for g, c in pd.Series(etiquetas).value_counts().sort_index().items()},
+            "profile": con_grupo.groupby("cluster")[list(numericas)].mean() if len(numericas) else pd.DataFrame(),
+            "projection": puntos,
+            "projection_variance": [float(v) for v in proyeccion["varianza_explicada"]],
+            "centers": puntos.groupby("cluster")[[c for c in puntos.columns if c != "cluster"]].mean(),
+            "metrics": metricas,
+            "primary_metric": _support.primary("silhouette", metricas["silhouette"], True),
+        }
+
+    def _kmeans(self, datos, columnas, params, payload):  # noqa: ANN001, ANN202
+        return self._agrupar("kmeans", datos, columnas, params, payload)
+
+    def _hac(self, datos, columnas, params, payload):  # noqa: ANN001, ANN202
+        return self._agrupar("hac", datos, columnas, params, payload)
+
+    def _elbow(self, datos: pd.DataFrame, columnas: list[Any] | None, params: dict[str, Any],
+               payload: dict[str, Any]) -> dict[str, Any]:
+        k_max = min(params.get("k_max", 10), len(datos) - 1)
+        if k_max < 2:
+            raise ValidationError("El método del codo requiere al menos tres filas.")
+        inercias = _support.ml_call(ClusteringAnalysis(datos).kmeans_codo, k_max=k_max, columnas=columnas)
+        tabla = pd.DataFrame({"k": inercias.index.astype(int), "inercia": inercias.to_numpy(dtype=float)})
+        return {"algorithm": "Método del codo", "inertias": tabla, "metrics": {"k_max": k_max}}
+
+    def _dendrogram(self, datos: pd.DataFrame, columnas: list[Any] | None, params: dict[str, Any],
+                    payload: dict[str, Any]) -> dict[str, Any]:
+        if len(datos) > MAX_FILAS_HAC:
+            raise ValidationError(f"El dendrograma se limita a {MAX_FILAS_HAC} filas.")
+        eje = _support.ml_call(ClusteringAnalysis(datos).hac_dendrograma, metodo=params.get("method", "ward"),
+                               columnas=columnas)
+        return {"algorithm": "Dendrograma HAC", "image_png": figure_to_png_bytes(eje.figure), "metrics": {}}
+
+    # ------------------------------------------------------------------
+    # Benchmark y modo automático
+    # ------------------------------------------------------------------
+    def _benchmark(self, datos: pd.DataFrame, columnas: list[Any] | None, params: dict[str, Any],
+                   payload: dict[str, Any]) -> dict[str, Any]:
+        configs = payload.get("configs")
+        if configs is None:
+            k_min, k_max = params.get("k_min", 2), params.get("k_max", 6)
+            if k_min > k_max:
+                raise ValidationError("k_min no puede ser mayor que k_max.")
+            k_max = min(k_max, len(datos) - 1)
+            configs = default_configs(range(k_min, k_max + 1), hac_k=min(params.get("hac_k", 3), k_max))
+        tabla, resultados = _support.ml_call(ClusteringAnalysis(datos).benchmark, configs, columnas)
+        agrupamiento = tabla[(tabla["Tipo"] == "Agrupamiento")].dropna(subset=["silhouette"]) \
+            if "silhouette" in tabla else pd.DataFrame()
+        if agrupamiento.empty:
+            raise ValidationError("Ninguna configuración de agrupamiento pudo evaluarse.")
+        mejor = agrupamiento.iloc[0]
+        return {
+            "algorithm": "Benchmark de agrupamiento",
+            "table": tabla,
+            "best": str(mejor["Configuración"]),
+            "configs": configs,
+            "metrics": {"silhouette": float(mejor["silhouette"])},
+            "primary_metric": _support.primary("silhouette", mejor["silhouette"], True),
+        }
+
+    def _auto(self, datos: pd.DataFrame, columnas: list[Any] | None, params: dict[str, Any],
+              payload: dict[str, Any]) -> dict[str, Any]:
+        agente = AgenteNoSupervisado(datos[columnas] if columnas else datos)
+        _support.run_legacy(agente, _support.use_llm(self, payload))
+        return {
+            "algorithm": "Agente no supervisado",
+            "mode": agente.modo,
+            "model": agente.modelo,
+            "fallback_reason": agente.motivo_respaldo,
+            "llm_usage_text": llm.resumen_uso(agente.uso_llm) if agente.uso_llm else "",
+            "plan": list(agente.plan),
+            "analysis": agente.analisis_llm,
+            "self_evaluation": list(agente.autoevaluacion),
+            "results": agente.resultados,
+            "log": pd.DataFrame(agente.bitacora),
+            "report_html": agente.informe_html(),
+            "metrics": {},
+        }

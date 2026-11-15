@@ -30,8 +30,16 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from framework_ia.ml.eda.dataframe import DataFrame  # noqa: E402
+from framework_ia.ml.preprocessing.transforms import OPERATIONS  # noqa: E402
+from framework_ia.services.dataset_service import DatasetService  # noqa: E402
+from framework_ia.services.preprocessing_service import PreprocessingService  # noqa: E402
+from framework_ia.utils.exceptions import ValidationError  # noqa: E402
+from framework_ia.utils.serialization import figure_to_png_bytes  # noqa: E402
 
-from . import llm  # noqa: E402
+from . import _support, llm  # noqa: E402
+from .agent_factory import agent_type  # noqa: E402
+from .base_agent import BaseAgent  # noqa: E402
+from .messaging import Message  # noqa: E402
 
 # Umbrales que usa el agente para razonar (se documentan en el informe).
 UMBRAL_NULOS_COLUMNA = 0.60     # > 60 % de nulos: la columna aporta poca información
@@ -976,3 +984,107 @@ class AgenteEDA:
         for paso in self.pasos:
             for _, figura in paso.figuras:
                 plt.close(figura)
+
+
+# ======================================================================
+# Adaptador MAS
+# ======================================================================
+CLEANING_OPERATIONS = frozenset({
+    "impute", "drop_na", "fill_na", "drop_duplicates", "drop_columns", "convert_type", "sort",
+    "normalize", "standardize", "standardize_names", "drop_id_columns",
+})
+
+
+@agent_type("eda", description="Perfilado, limpieza, preprocesamiento y correlaciones (envuelve AgenteEDA).")
+class EDAAgent(BaseAgent):
+    """Agente especializado en EDA y preparación de datos."""
+
+    default_capabilities = frozenset({"eda.profile", "eda.summary", "eda.clean", "eda.preprocess",
+                                      "eda.correlations"})
+    supported_capabilities = default_capabilities
+    config_schema = {"use_llm": ("booleano",), "max_graficos": ("entero", 1, 30)}
+
+    def _execute(self, message: Message) -> dict[str, Any]:
+        datos = self.require_data(message)
+        accion = message.task.split(".", 1)[1]
+        resultado = getattr(self, f"_{accion}")(datos, message.payload)
+        resultado.update({"task": message.task, "agent": self.agent_id})
+        return resultado
+
+    def _profile(self, datos: pd.DataFrame, payload: dict[str, Any]) -> dict[str, Any]:
+        objetivo = payload.get("target")
+        if objetivo is not None and objetivo not in datos.columns:
+            raise ValidationError(f"La variable objetivo '{objetivo}' no existe.")
+        agente = AgenteEDA(datos, objetivo=objetivo, max_graficos=self.config.get("max_graficos", 12))
+        _support.run_legacy(agente, _support.use_llm(self, payload))
+        try:
+            informe = agente.informe_html()
+            pasos = [{
+                "numero": p.numero, "titulo": p.titulo, "observacion": p.observacion,
+                "razonamiento": p.razonamiento, "accion": p.accion, "interpretacion": p.interpretacion,
+                "recomendaciones": list(p.recomendaciones), "severidad": p.severidad,
+                "tablas": dict(p.tablas),
+                "figuras": [(titulo, figure_to_png_bytes(figura)) for titulo, figura in p.figuras],
+            } for p in agente.pasos]
+        finally:
+            agente.cerrar_figuras()
+        return {
+            "mode": agente.modo,
+            "model": agente.modelo,
+            "fallback_reason": agente.motivo_respaldo,
+            "llm_usage_text": llm.resumen_uso(agente.uso_llm) if agente.uso_llm else "",
+            "target": agente.objetivo,
+            "summary": dict(agente.sintesis),
+            "plan": list(agente.plan),
+            "steps": pasos,
+            "log": pd.DataFrame(agente.bitacora),
+            "prepared_data": agente.datos_para_modelos,
+            "clean_data": agente.datos_limpios.copy(),
+            "report_html": informe,
+            "decisions": [{"decision": i["paso"], "justification": i["razon"]} for i in agente.plan],
+            "metrics": {"pasos_ejecutados": len(agente.pasos)},
+        }
+
+    @staticmethod
+    def _summary(datos: pd.DataFrame, payload: dict[str, Any]) -> dict[str, Any]:
+        servicio = DatasetService()
+        return {"summary": servicio.summary(datos), "tables": servicio.eda_tables(datos), "metrics": {}}
+
+    @staticmethod
+    def _aplicar(datos: pd.DataFrame, operaciones: Any, permitidas: frozenset[str] | None) -> dict[str, Any]:
+        if not isinstance(operaciones, list) or not operaciones:
+            raise ValidationError("Indique la lista de operaciones ('operations').")
+        if permitidas is not None:
+            invalidas = sorted({o.get("op") for o in operaciones if isinstance(o, dict)} - permitidas)
+            if invalidas:
+                raise ValidationError(f"Operaciones no permitidas en limpieza: {invalidas}.")
+        resultado = PreprocessingService().apply(datos, operaciones)
+        return {
+            "data": resultado.data,
+            "steps": resultado.steps,
+            "comparison": PreprocessingService.compare(datos, resultado.data),
+            "metrics": {"filas": len(resultado.data), "columnas": resultado.data.shape[1]},
+        }
+
+    def _clean(self, datos: pd.DataFrame, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._aplicar(datos, payload.get("operations"), CLEANING_OPERATIONS)
+
+    def _preprocess(self, datos: pd.DataFrame, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._aplicar(datos, payload.get("operations"), frozenset(OPERATIONS))
+
+    @staticmethod
+    def _correlations(datos: pd.DataFrame, payload: dict[str, Any]) -> dict[str, Any]:
+        numericas = datos.select_dtypes(include=np.number)
+        numericas = numericas.loc[:, numericas.nunique() > 1]
+        if numericas.shape[1] < 2:
+            raise ValidationError("Se requieren al menos dos columnas numéricas para calcular correlaciones.")
+        pearson = DataFrame(numericas).correlacion()
+        spearman = numericas.corr(method="spearman")
+        pares = (pearson.where(np.triu(np.ones_like(pearson, dtype=bool), k=1)).stack()
+                 .rename("Pearson").reset_index())
+        pares.columns = ["Variable 1", "Variable 2", "Pearson"]
+        pares["Spearman"] = [spearman.loc[a, b] for a, b in zip(pares["Variable 1"], pares["Variable 2"])]
+        pares["|r|"] = pares["Pearson"].abs()
+        pares = pares.sort_values("|r|", ascending=False, ignore_index=True)
+        return {"pearson": pearson, "spearman": spearman, "pairs": pares,
+                "metrics": {"max_abs_r": float(pares["|r|"].max()) if not pares.empty else 0.0}}

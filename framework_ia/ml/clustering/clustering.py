@@ -13,6 +13,15 @@ from .unsupervised_base import UnsupervisedBase
 
 
 class ClusteringAnalysis(UnsupervisedBase):
+    def benchmark(self, configs=None, columnas=None):
+        """Compara configuraciones de PCA, K-Means y HAC con métricas homogéneas.
+
+        Devuelve ``(tabla, resultados)``; ver :class:`framework_ia.ml.clustering.benchmark.ClusteringBenchmark`.
+        """
+        from .benchmark import ClusteringBenchmark
+
+        return ClusteringBenchmark(self.dataframe, columnas).run(configs)
+
     def hac(self, n_clusters=3, linkage="ward", metric="euclidean", columnas=None):
         matriz, _ = self.preparar_datos_numericos(columnas)
         modelo = AgglomerativeClustering(

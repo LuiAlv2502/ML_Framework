@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.ensemble import (
 	AdaBoostClassifier,
@@ -174,6 +175,54 @@ class ClasificacionModelos(SupervisadoBase):
 			"adaboost": self.adaboost(),
 			"xgboost": self.xgboost(),
 		}
+
+	def benchmark(self, configs: list[dict[str, Any]] | None = None):
+		"""Modelo base + configuraciones alternativas con la misma partición y semilla.
+
+		``configs`` es una lista de ``{"algorithm", "params", "label"}`` (por defecto
+		``catalog.BENCHMARK_CONFIGS``). Devuelve ``(tabla, resultados)``: la tabla está ordenada por
+		F1 macro y ``resultados[label]`` contiene el pipeline y las métricas completas.
+		"""
+		from .catalog import BENCHMARK_CONFIGS, CATALOGO, describe_params
+
+		configs = BENCHMARK_CONFIGS if configs is None else configs
+		if not configs:
+			raise ValueError("Indique al menos una configuración para el benchmark.")
+		filas, resultados = [], {}
+		for posicion, config in enumerate(configs):
+			algoritmo = config.get("algorithm")
+			if algoritmo not in CATALOGO:
+				raise ValueError(f"Algoritmo desconocido '{algoritmo}'. Opciones: {list(CATALOGO)}")
+			parametros = dict(config.get("params") or {})
+			etiqueta = config.get("label") or f"{algoritmo} ({describe_params(parametros)})"
+			if etiqueta in resultados:
+				etiqueta = f"{etiqueta} #{posicion + 1}"
+			fila = {
+				"Modelo": etiqueta,
+				"Algoritmo": CATALOGO[algoritmo]["name"],
+				"Familia": CATALOGO[algoritmo]["family"],
+				"Configuración": "estándar" if not parametros else "variación",
+				"Parámetros": describe_params(parametros),
+			}
+			try:
+				if algoritmo == "adaboost_grid":
+					cv = parametros.pop("cv", 5)
+					resultado = self.adaboost_grid(parametros, cv=cv)
+				else:
+					resultado = getattr(self, algoritmo)(**parametros)
+			except ImportError as error:
+				filas.append({**fila, "error": str(error)})
+				continue
+			resultados[etiqueta] = resultado
+			metricas = resultado["metricas"]
+			filas.append({
+				**fila,
+				**{m: metricas[m] for m in ("accuracy", "precision_macro", "recall_macro", "f1_macro")},
+			})
+		tabla = pd.DataFrame(filas)
+		if "f1_macro" in tabla:
+			tabla = tabla.sort_values("f1_macro", ascending=False, na_position="last", ignore_index=True)
+		return tabla, resultados
 
 
 

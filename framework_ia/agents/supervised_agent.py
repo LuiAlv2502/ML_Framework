@@ -13,11 +13,17 @@ import importlib.util
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 import pandas as pd
 
-from . import llm
+from framework_ia.ml.classification.catalog import describe_params
+from framework_ia.utils.exceptions import ValidationError
+from framework_ia.utils.validation import validate_params, validate_range, validate_target
+
+from . import _support, llm
+from .base_agent import BaseAgent
+from .messaging import Message
 
 MAX_CLASES = 30
 MIN_FILAS = 10
@@ -766,3 +772,192 @@ class AgenteSupervisado(ABC):
             for _, fila in validacion["por_semilla"].iterrows()
         ]
         return pd.DataFrame(filas)
+
+
+# ======================================================================
+# Adaptador MAS común a los agentes de clasificación y regresión
+# ======================================================================
+class SupervisedAgentAdapter(BaseAgent):
+    """Agente del MAS que administra un dominio supervisado (entrenar, comparar y modo automático).
+
+    Las subclases indican el catálogo de algoritmos (lista blanca), la clase de ML, el agente de los
+    laboratorios que se reutiliza en ``<dominio>.auto`` y la métrica principal.
+    """
+
+    TASK: ClassVar[str] = ""
+    CATALOG: ClassVar[dict[str, dict[str, Any]]] = {}
+    BENCHMARK_CONFIGS: ClassVar[list[dict[str, Any]]] = []
+    LEGACY: ClassVar[type[AgenteSupervisado]]
+    PRIMARY: ClassVar[tuple[str, bool]] = ("", True)
+    config_schema = {"use_llm": ("booleano",), "repetitions": ("entero", 2, 10)}
+
+    # ------------------------------------------------------------------
+    # Configuración: subconjunto de algoritmos y parámetros por defecto
+    # ------------------------------------------------------------------
+    def validate_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        config = dict(config)
+        permitidos = config.pop("allowed_algorithms", None)
+        por_defecto = config.pop("default_params", None)
+        limpio = super().validate_config(config)
+        if permitidos is not None:
+            if not isinstance(permitidos, (list, tuple)) or not permitidos:
+                raise ValidationError("allowed_algorithms debe ser una lista no vacía.")
+            desconocidos = sorted(set(permitidos) - set(self.CATALOG))
+            if desconocidos:
+                raise ValidationError(f"Algoritmos desconocidos {desconocidos}. Catálogo: {sorted(self.CATALOG)}.")
+            limpio["allowed_algorithms"] = list(dict.fromkeys(permitidos))
+        if por_defecto:
+            if not isinstance(por_defecto, dict):
+                raise ValidationError("default_params debe ser un diccionario algoritmo → parámetros.")
+            limpio["default_params"] = {
+                algoritmo: validate_params(parametros, self.CATALOG[algoritmo]["params"], owner=algoritmo)
+                for algoritmo, parametros in por_defecto.items()
+                if self._permitido(algoritmo, limpio)
+            }
+        return limpio
+
+    def _permitido(self, algoritmo: str, config: dict[str, Any] | None = None) -> bool:
+        if algoritmo not in self.CATALOG:
+            raise ValidationError(f"Algoritmo desconocido '{algoritmo}'. Opciones: {sorted(self.CATALOG)}.")
+        permitidos = (config if config is not None else self.config).get("allowed_algorithms")
+        if permitidos is not None and algoritmo not in permitidos:
+            raise ValidationError(
+                f"El agente '{getattr(self, 'name', '')}' solo admite: {', '.join(permitidos)}."
+            )
+        return True
+
+    @property
+    def allowed_algorithms(self) -> list[str]:
+        return list(self.config.get("allowed_algorithms") or self.CATALOG)
+
+    def describe(self) -> dict[str, Any]:
+        return {**super().describe(), "allowed_algorithms": self.allowed_algorithms}
+
+    def _parametros(self, algoritmo: str, parametros: dict[str, Any] | None) -> dict[str, Any]:
+        self._permitido(algoritmo)
+        combinados = {**self.config.get("default_params", {}).get(algoritmo, {}), **(parametros or {})}
+        return validate_params(combinados, self.CATALOG[algoritmo]["params"], owner=algoritmo)
+
+    # ------------------------------------------------------------------
+    # Despacho por capacidad
+    # ------------------------------------------------------------------
+    def _execute(self, message: Message) -> dict[str, Any]:
+        accion = message.task.split(".", 1)[1]
+        manejadores = {"train": self._train, "benchmark": self._benchmark, "auto": self._auto}
+        if accion not in manejadores:
+            raise ValidationError(f"Acción no soportada '{message.task}'.")
+        resultado = manejadores[accion](message)
+        resultado["agent"] = self.agent_id
+        return resultado
+
+    def _comunes(self, message: Message) -> dict[str, Any]:
+        datos = self.require_data(message)
+        payload = message.payload
+        objetivo = validate_target(datos, payload.get("target"), task=self.TASK)
+        return {
+            "data": datos,
+            "target": objetivo,
+            "features": _support.features(datos, payload, objetivo),
+            "test_size": float(validate_range("test_size", payload.get("test_size", 0.25), 0.05, 0.95)),
+            "scale": bool(payload.get("scale", True)),
+            "seeds": _support.seeds(payload),
+        }
+
+    def _modelo(self, comunes: dict[str, Any], semilla: int, payload: dict[str, Any]) -> Any:
+        """Instancia la clase de ML del dominio para una semilla."""
+        raise NotImplementedError
+
+    def _train(self, message: Message) -> dict[str, Any]:
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------
+    # Benchmark (modelo base + variaciones, misma partición y semilla)
+    # ------------------------------------------------------------------
+    def _benchmark(self, message: Message) -> dict[str, Any]:
+        comunes = self._comunes(message)
+        configs = message.payload.get("configs")
+        if configs is None:
+            configs = [c for c in self.BENCHMARK_CONFIGS if c["algorithm"] in self.allowed_algorithms]
+        if not isinstance(configs, list) or not configs:
+            raise ValidationError("El benchmark necesita al menos una configuración.")
+        validadas = []
+        for config in configs:
+            algoritmo = config.get("algorithm")
+            parametros = self._parametros(algoritmo, config.get("params"))
+            validadas.append({"algorithm": algoritmo, "params": parametros,
+                              "label": config.get("label") or f"{algoritmo} ({describe_params(parametros)})"})
+        semilla = comunes["seeds"][0]
+        modelo = self._modelo(comunes, semilla, message.payload)
+        tabla, resultados = _support.ml_call(modelo.benchmark, validadas)
+        if tabla.empty or self.PRIMARY[0] not in tabla:
+            raise ValidationError("Ninguna configuración del benchmark pudo ejecutarse.")
+        mejor = tabla.dropna(subset=[self.PRIMARY[0]]).iloc[0]
+        return {
+            "task": f"{self.TASK}.benchmark",
+            "target": comunes["target"],
+            "seed": semilla,
+            "test_size": comunes["test_size"],
+            "configs": validadas,
+            "table": tabla,
+            "best": str(mejor["Modelo"]),
+            "primary_metric": _support.primary(self.PRIMARY[0], mejor[self.PRIMARY[0]], self.PRIMARY[1]),
+            **self._extra_benchmark(tabla, resultados),
+        }
+
+    def _extra_benchmark(self, tabla: pd.DataFrame, resultados: dict[str, Any]) -> dict[str, Any]:
+        return {}
+
+    # ------------------------------------------------------------------
+    # Modo automático: agente de los laboratorios (LLM opcional + reglas)
+    # ------------------------------------------------------------------
+    def _auto(self, message: Message) -> dict[str, Any]:
+        datos = self.require_data(message)
+        payload = message.payload
+        objetivo = payload.get("target")
+        if objetivo is not None:
+            validate_target(datos, objetivo, task=self.TASK)
+        repeticiones = int(validate_range("repeticiones", payload.get("repetitions",
+                                          self.config.get("repetitions", 5)), 2, 10, integer=True))
+        prueba = float(validate_range("test_size", payload.get("test_size", 0.25), 0.05, 0.95))
+        agente = _support.ml_call(self.LEGACY, datos, repeticiones=repeticiones, test_size=prueba, objetivo=objetivo)
+        try:
+            _support.run_legacy(agente, _support.use_llm(self, payload))
+        except (KeyError, ValueError, TypeError) as error:
+            raise ValidationError(str(error)) from error
+        mejor = agente.validaciones[agente.mejor]
+        resumen = mejor["resumen"][agente.metrica]
+        return {
+            "task": f"{self.TASK}.auto",
+            "mode": agente.modo,
+            "model": agente.modelo,
+            "fallback_reason": agente.motivo_respaldo,
+            "llm_usage": dict(agente.uso_llm),
+            "llm_usage_text": llm.resumen_uso(agente.uso_llm) if agente.uso_llm else "",
+            "target": agente.objetivo,
+            "predictors": list(agente.predictores),
+            "excluded": list(agente.excluidas),
+            "rows_without_target": agente.filas_sin_objetivo,
+            "metric": agente.metrica,
+            "repetitions": agente.repeticiones,
+            "test_size": agente.test_size,
+            "best": agente.mejor,
+            "best_name": mejor["nombre"],
+            "best_params": mejor["parametros"],
+            "best_mean": resumen["media"],
+            "best_std": resumen["desv"],
+            "llm_choice": agente.eleccion_llm,
+            "decisions": list(agente.decisiones),
+            "plan": list(agente.plan),
+            "analysis": agente.analisis_llm,
+            "self_evaluation": list(agente.autoevaluacion),
+            "beats_baseline": agente.supera_linea_base,
+            "ranking": agente.ranking(),
+            "by_seed": agente.mejores_por_semilla(),
+            "best_detail": self._detalle_auto(agente),
+            "log": pd.DataFrame(agente.bitacora),
+            "report_html": agente.informe_html(),
+            "primary_metric": _support.primary(agente.metrica, resumen["media"], agente.maximizar),
+        }
+
+    def _detalle_auto(self, agente: AgenteSupervisado) -> dict[str, Any]:
+        return {}

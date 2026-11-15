@@ -241,3 +241,36 @@ class RegresionModelos(SupervisadoBase):
             .first()
             .sort_values("RMSE", ignore_index=True)
         )
+
+    def benchmark(self, configs: list[dict[str, Any]] | None = None):
+        """Modelo base de cada familia + configuraciones alternativas, con la misma partición y semilla.
+
+        ``configs`` es una lista de ``{"algorithm", "params", "label"}`` (por defecto
+        ``catalog.BENCHMARK_CONFIGS``). Devuelve ``(tabla, resultados)`` con la tabla ordenada por RMSE.
+        """
+        from .catalog import BENCHMARK_CONFIGS, CATALOGO, describe_params
+
+        configs = BENCHMARK_CONFIGS if configs is None else configs
+        if not configs:
+            raise ValueError("Indique al menos una configuración para el benchmark.")
+        filas, resultados = [], {}
+        for posicion, config in enumerate(configs):
+            algoritmo = config.get("algorithm")
+            if algoritmo not in CATALOGO or algoritmo == "regresion_lineal_simple":
+                raise ValueError(f"Algoritmo no válido para benchmark: '{algoritmo}'.")
+            parametros = dict(config.get("params") or {})
+            etiqueta = config.get("label") or f"{NOMBRES[algoritmo]} ({describe_params(parametros)})"
+            if etiqueta in resultados:
+                etiqueta = f"{etiqueta} #{posicion + 1}"
+            resultado = getattr(self, algoritmo)(**parametros)
+            resultados[etiqueta] = resultado
+            filas.append({
+                "Modelo": etiqueta,
+                "Familia": CATALOGO[algoritmo]["family"],
+                "Algoritmo": NOMBRES[algoritmo],
+                "Configuración": "estándar" if not parametros else "variación",
+                "Parámetros": describe_params(parametros),
+                **resultado["metricas"],
+            })
+        tabla = pd.DataFrame(filas).sort_values("RMSE", ignore_index=True)
+        return tabla, resultados
